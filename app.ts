@@ -1,8 +1,42 @@
-import { loadPokemons } from "./pokemon.js";
+import { Pokemon, loadPokemons } from "./pokemon.js";
 
-async function displayPokemons() {
+function capitalizeFirstLetter(name: string): string {
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+function renderPokemons(pokemons: Pokemon[]): void {
+  const pokedexContainer = document.getElementById("pokedex");
+
+  if (!pokedexContainer) {
+    console.error("Pokedex container not found in the DOM.");
+    return;
+  }
+
+  pokemons.forEach((pokemon: Pokemon) => {
+    const pokemonCard = document.createElement("div");
+    pokemonCard.classList.add("pokemon-card");
+
+    const pokemonImage = document.createElement("img");
+    pokemonImage.src = pokemon.imageUrl;
+
+    const pokemonNumber = document.createElement("div");
+    pokemonNumber.classList.add("pokemon-number");
+    pokemonNumber.textContent = `${pokemon.id}`;
+
+    const pokemonName = document.createElement("div");
+    pokemonName.classList.add("pokemon-name");
+    pokemonName.textContent = capitalizeFirstLetter(pokemon.name);
+
+    pokemonCard.appendChild(pokemonImage);
+    pokemonCard.appendChild(pokemonNumber);
+    pokemonCard.appendChild(pokemonName);
+    pokedexContainer.appendChild(pokemonCard);
+  });
+}
+
+async function displayPokemons(): Promise<void> {
   const pokemons = await loadPokemons(151);
-  console.log(pokemons);
+  renderPokemons(pokemons);
 }
 
 displayPokemons();

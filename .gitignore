@@ -170,3 +170,6 @@ dist
 
 # pauek
 users.html
+
+#js generated with tsc
+*.js
