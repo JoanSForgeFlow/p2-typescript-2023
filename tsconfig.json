@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
     "lib": [
-      "ESNext"
+      "ESNext",
+      "dom",
     ],
     "module": "esnext",
     "target": "esnext",
-    "moduleResolution": "nodenext",
+    "moduleResolution": "node",
     "strict": true,
     "downlevelIteration": true,
     "skipLibCheck": true,
@@ -13,8 +14,6 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "allowJs": true,
-    "types": [
-      "bun-types" // add Bun global
-    ]
+    "types": []
   }
 }
