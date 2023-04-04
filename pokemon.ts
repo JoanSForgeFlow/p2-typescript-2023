@@ -1,8 +1,11 @@
+import { PokemonDetails } from "./pokemon-detail.js";
+
 export class Pokemon {
     constructor(
       public id: number,
       public name: string,
-      public imageUrl: string
+      public imageUrl: string,
+      public officialArtworkUrl?: string
     ) {}
   
     get displayName() {
@@ -26,4 +29,3 @@ export class Pokemon {
   
     return pokemons;
   };
-  
