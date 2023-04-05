@@ -77,7 +77,7 @@ export class PokemonDetails {
 
     const pokemonTypes = [
       'normal', 'fighting', 'flying', 'poison', 'ground', 'rock', 'bug', 'ghost', 'steel', 'fire', 'water',
-      'grass', 'electric', 'psychic', 'ice', 'dragon', 'dark', 'fairy', 'shadow'
+      'grass', 'electric', 'psychic', 'ice', 'dragon', 'dark', 'fairy',
     ];
 
     const typeRelationMultipliers: { [key: string]: number } = {};

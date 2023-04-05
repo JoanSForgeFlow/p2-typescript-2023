@@ -71,14 +71,14 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
   }
 
   function renderPokemonDetail(pokemon: PokemonDetails): string {
-    const types = pokemon.types.join(', ');
+    const types = pokemon.types.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
     const abilities = pokemon.abilities.join(', ');
-    const superWeakTo = pokemon.superWeakTo.join(', ');
-    const weakTo = pokemon.weakTo.join(', ');
-    const normal = pokemon.normal.join(', ');
-    const resistantTo = pokemon.resistantTo.join(', ');
-    const superResistantTo = pokemon.superResistantTo.join(', ');
-    const immuneTo = pokemon.immuneTo.join(', ');
+    const superWeakTo = pokemon.superWeakTo.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
+    const weakTo = pokemon.weakTo.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
+    const normal = pokemon.normal.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
+    const resistantTo = pokemon.resistantTo.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
+    const superResistantTo = pokemon.superResistantTo.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
+    const immuneTo = pokemon.immuneTo.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
   
     return `
   <html>
@@ -146,6 +146,90 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
       .back-button:hover {
         background-color: #cc0000;
       }
+      .tag {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        margin-right: 8px;
+        margin-bottom: 8px;
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 1px;
+        white-space: nowrap;
+      }
+      .normal {
+        background-color: #A8A878;
+        color: #fff;
+      }
+      .fighting {
+        background-color: #C03028;
+        color: #fff;
+      }
+      .flying {
+        background-color: #A890F0;
+        color: #fff;
+      }
+      .poison {
+        background-color: #A040A0;
+        color: #fff;
+      }
+      .ground {
+        background-color: #E0C068;
+        color: #fff;
+      }
+      .rock {
+        background-color: #B8A038;
+        color: #fff;
+      }
+      .bug {
+        background-color: #A8B820;
+        color: #fff;
+      }
+      .ghost {
+        background-color: #705898;
+        color: #fff;
+      }
+      .steel {
+        background-color: #B8B8D0;
+        color: #fff;
+      }
+      .fire {
+        background-color: #F08030;
+        color: #fff;
+      }
+      .water {
+        background-color: #6890F0;
+        color: #fff;
+      }
+      .grass {
+        background-color: #78C850;
+        color: #fff;
+      }
+      .electric {
+        background-color: #F8D030;
+        color: #fff;
+      }
+      .psychic {
+        background-color: #F85888;
+        color: #fff;
+      }
+      .ice {
+        background-color: #98D8D8;
+        color: #fff;
+      }
+      .dragon {
+        background-color: #7038F8;
+        color: #fff;
+      }
+      .dark {
+        background-color: #705848;
+        color: #fff;
+      }
+      .fairy {
+        background-color: #EE99AC;
+        color: #fff;
+      }
     </style>
     <body>
       <h1>${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h1>
@@ -181,7 +265,7 @@ function head(title: string): string {
 }
 
 (async () => {
-  const pokemons = await loadPokemons(2);
+  const pokemons = await loadPokemons(50);
   const indexHtml = renderPokemonIndex(pokemons);
   await writeFile("index.html", indexHtml);
 
