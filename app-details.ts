@@ -62,13 +62,23 @@ function renderPokemonDetails(pokemonDetails: PokemonDetails) {
     abilities.textContent = `Abilities: ${pokemonDetails.abilities.map(capitalizeFirstLetter).join(", ")}`;
 
     const doubleWeakness = document.createElement("div");
-    doubleWeakness.textContent = `Doubly Weak To: ${pokemonDetails.doubleWeakTo.map(capitalizeFirstLetter).join(", ")}`;
+    doubleWeakness.textContent = `Super Weak To: ${pokemonDetails.superWeakTo.map(capitalizeFirstLetter).join(", ")}`;
 
     const simpleWeakness = document.createElement("div");
     simpleWeakness.textContent = `Weak To: ${pokemonDetails.weakTo.map(capitalizeFirstLetter).join(", ")}`;
 
     const immuneTo = document.createElement("div");
     immuneTo.textContent = `Immune To: ${pokemonDetails.immuneTo.map(capitalizeFirstLetter).join(", ")}`;
+
+    const resistantTo = document.createElement("div");
+    resistantTo.textContent = `Resistant To: ${pokemonDetails.resistantTo.map(capitalizeFirstLetter).join(", ")}`;
+
+    const superResistantTo = document.createElement("div");
+    superResistantTo.textContent = `Super Resistant To: ${pokemonDetails.superResistantTo.map(capitalizeFirstLetter).join(", ")}`;
+
+    const normal = document.createElement("div");
+    normal.textContent = `Normal: ${pokemonDetails.normal.map(capitalizeFirstLetter).join(", ")}`;
+
   
     pokemonDetailsDiv.appendChild(pokemonNumber);
     pokemonDetailsDiv.appendChild(pokemonName);
@@ -79,6 +89,9 @@ function renderPokemonDetails(pokemonDetails: PokemonDetails) {
     pokemonDetailsDiv.appendChild(abilities);
     pokemonDetailsDiv.appendChild(doubleWeakness);
     pokemonDetailsDiv.appendChild(simpleWeakness);
+    pokemonDetailsDiv.appendChild(normal);
+    pokemonDetailsDiv.appendChild(resistantTo);
+    pokemonDetailsDiv.appendChild(superResistantTo);
     pokemonDetailsDiv.appendChild(immuneTo);
   
     pokemonDetailContainer.appendChild(pokemonDetailsDiv);

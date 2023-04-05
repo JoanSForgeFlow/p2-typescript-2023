@@ -15,8 +15,11 @@ export class PokemonDetails {
       public weight: number,
       public types: string[],
       public abilities: string[],
-      public doubleWeakTo: string[],
+      public superWeakTo: string[],
       public weakTo: string[],
+      public normal: string[],
+      public resistantTo: string[],
+      public superResistantTo: string[],
       public immuneTo: string[],
     ) {}
   }
@@ -41,8 +44,11 @@ export class PokemonDetails {
         weight,
         types,
         abilities,
-        damageRelations.doubleWeakTo,
+        damageRelations.superWeakTo,
         damageRelations.weakTo,
+        damageRelations.normal,
+        damageRelations.resistantTo,
+        damageRelations.superResistantTo,
         damageRelations.immuneTo,
       );
     } catch (error) {
@@ -52,8 +58,11 @@ export class PokemonDetails {
   };
 
   async function getPokemonDamageRelations(pokemonId: number): Promise<{
-    doubleWeakTo: string[];
+    superWeakTo: string[];
     weakTo: string[];
+    normal: string[];
+    resistantTo: string[];
+    superResistantTo: string[];
     immuneTo: string[];
   }> {
     const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemonId}`);
@@ -66,41 +75,56 @@ export class PokemonDetails {
       return data.damage_relations;
     }));
 
-    const doubleWeakTo: Set<string> = new Set();
-    const weakTo: Set<string> = new Set();
-    const immuneTo: Set<string> = new Set();
+    const pokemonTypes = [
+      'normal', 'fighting', 'flying', 'poison', 'ground', 'rock', 'bug', 'ghost', 'steel', 'fire', 'water',
+      'grass', 'electric', 'psychic', 'ice', 'dragon', 'dark', 'fairy', 'shadow'
+    ];
 
-    damageRelations.forEach((relations: DamageRelation, index: number) => {
+    const typeRelationMultipliers: { [key: string]: number } = {};
+
+    damageRelations.forEach((relations: DamageRelation) => {
       relations.double_damage_from.forEach((relation) => {
-        if (damageRelations.length === 2 && index === 0) {
-          if (damageRelations[1].double_damage_from.some((r) => r.name === relation.name)) {
-            doubleWeakTo.add(relation.name);
-          } else if (
-            !damageRelations[1].half_damage_from.some((r) => r.name === relation.name) &&
-            !damageRelations[0].half_damage_from.some((r) => r.name === relation.name) &&
-            !damageRelations[1].double_damage_from.some((r) => r.name === relation.name)
-          ) {
-            weakTo.add(relation.name);
-          }
-        } else if (damageRelations.length === 1 || index === 1) {
-          weakTo.add(relation.name);
-        }
+        typeRelationMultipliers[relation.name] = (typeRelationMultipliers[relation.name] || 1) * 2;
       });
-
+      relations.half_damage_from.forEach((relation) => {
+        typeRelationMultipliers[relation.name] = (typeRelationMultipliers[relation.name] || 1) * 0.5;
+      });
       relations.no_damage_from.forEach((relation) => {
-        if (damageRelations.length === 2 && index === 0) {
-          if (!damageRelations[1].no_damage_from.some((r) => r.name === relation.name)) {
-            immuneTo.add(relation.name);
-          }
-        } else if (damageRelations.length === 1 || index === 1) {
-          immuneTo.add(relation.name);
-        }
+        typeRelationMultipliers[relation.name] = 0;
       });
     });
 
+    const superWeakTo: string[] = [];
+    const weakTo: string[] = [];
+    const normal: string[] = [];
+    const resistantTo: string[] = [];
+    const superResistantTo: string[] = [];
+    const immuneTo: string[] = [];
+
+    for (const type of pokemonTypes) {
+      const multiplier = typeRelationMultipliers[type];
+
+      if (multiplier === 0) {
+        immuneTo.push(type);
+      } else if (multiplier === 4) {
+        superWeakTo.push(type);
+      } else if (multiplier === 2) {
+        weakTo.push(type);
+      } else if (multiplier === 0.5) {
+        resistantTo.push(type);
+      } else if (multiplier === 0.25) {
+        superResistantTo.push(type);
+      } else {
+        normal.push(type);
+      }
+    }
+
     return {
-      doubleWeakTo: Array.from(doubleWeakTo),
-      weakTo: Array.from(weakTo),
-      immuneTo: Array.from(immuneTo),
+      superWeakTo,
+      weakTo,
+      normal,
+      resistantTo,
+      superResistantTo,
+      immuneTo,
     };
   }
