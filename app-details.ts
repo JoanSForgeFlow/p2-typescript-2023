@@ -37,10 +37,6 @@ function renderPokemonDetails(pokemonDetails: PokemonDetails) {
     const pokemonDetailsDiv = document.createElement("div");
     pokemonDetailsDiv.classList.add("pokemon-details");
   
-    const pokemonImage = document.createElement("img");
-    pokemonImage.src = pokemonDetails.imageUrl;
-    pokemonImage.alt = `${pokemonDetails.id}. ${pokemonDetails.name}`;
-  
     const pokemonNumber = document.createElement("div");
     pokemonNumber.classList.add("pokemon-number");
     pokemonNumber.textContent = `#${pokemonDetails.id.toString().padStart(3, "0")}`;
@@ -64,8 +60,16 @@ function renderPokemonDetails(pokemonDetails: PokemonDetails) {
   
     const abilities = document.createElement("div");
     abilities.textContent = `Abilities: ${pokemonDetails.abilities.map(capitalizeFirstLetter).join(", ")}`;
+
+    const doubleWeakness = document.createElement("div");
+    doubleWeakness.textContent = `Doubly Weak To: ${pokemonDetails.doubleWeakTo.map(capitalizeFirstLetter).join(", ")}`;
+
+    const simpleWeakness = document.createElement("div");
+    simpleWeakness.textContent = `Weak To: ${pokemonDetails.weakTo.map(capitalizeFirstLetter).join(", ")}`;
+
+    const immuneTo = document.createElement("div");
+    immuneTo.textContent = `Immune To: ${pokemonDetails.immuneTo.map(capitalizeFirstLetter).join(", ")}`;
   
-    pokemonDetailsDiv.appendChild(pokemonImage);
     pokemonDetailsDiv.appendChild(pokemonNumber);
     pokemonDetailsDiv.appendChild(pokemonName);
     pokemonDetailsDiv.appendChild(officialArtwork);
@@ -73,6 +77,9 @@ function renderPokemonDetails(pokemonDetails: PokemonDetails) {
     pokemonDetailsDiv.appendChild(weight);
     pokemonDetailsDiv.appendChild(types);
     pokemonDetailsDiv.appendChild(abilities);
+    pokemonDetailsDiv.appendChild(doubleWeakness);
+    pokemonDetailsDiv.appendChild(simpleWeakness);
+    pokemonDetailsDiv.appendChild(immuneTo);
   
     pokemonDetailContainer.appendChild(pokemonDetailsDiv);
   }
