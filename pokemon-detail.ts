@@ -21,6 +21,7 @@ export class PokemonDetails {
       public resistantTo: string[],
       public superResistantTo: string[],
       public immuneTo: string[],
+      public pokedexDescription: string,
     ) {}
   }
 
@@ -35,6 +36,7 @@ export class PokemonDetails {
       const types = data.types.map((type: any) => type.type.name);
       const abilities = data.abilities.map((ability: any) => ability.ability.name);
       const damageRelations = await getPokemonDamageRelations(id);
+      const { pokedexDescription } = await getPokemonSpeciesData(id);
       return new PokemonDetails(
         id,
         data.name,
@@ -50,12 +52,21 @@ export class PokemonDetails {
         damageRelations.resistantTo,
         damageRelations.superResistantTo,
         damageRelations.immuneTo,
+        pokedexDescription
       );
     } catch (error) {
       console.error("Error fetching data from the PokeAPI:", error);
       return undefined;
     }
   };
+
+  async function getPokemonSpeciesData(pokemonId: number): Promise<{ pokedexDescription: string }> {
+    const response = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokemonId}`);
+    const data = await response.json();
+    const englishFlavorTextEntry = data.flavor_text_entries.find((entry: { language: { name: string } }) => entry.language.name === 'en');
+    const pokedexDescription = englishFlavorTextEntry.flavor_text.replace(/\n/g, ' ').replace(/\f/g, ' ');
+    return { pokedexDescription };
+  }
 
   async function getPokemonDamageRelations(pokemonId: number): Promise<{
     superWeakTo: string[];

@@ -233,6 +233,19 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
         background-color: #EE99AC;
         color: #fff;
       }
+      .description {
+        background-color: #f8f8f8;
+        padding: 16px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-top: 16px;
+        font-size: 14px;
+        line-height: 1.4;
+        text-align: justify;
+        width: 80%;
+        max-width: 1000px;
+        margin-bottom: 16px;
+      }
     </style>
     <body>
       <h1>${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h1>
@@ -251,6 +264,7 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
           <tr><td class="attribute">Immune To:</td><td class="value">${immuneTo}</td></tr>
         </table>
       </div>
+      <p class="description">${pokemon.pokedexDescription}</p>
       <a href="index.html" class="back-button">Back to Menu</a>
     </body>
   </html>`;
