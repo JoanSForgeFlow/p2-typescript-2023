@@ -4,6 +4,11 @@ interface DamageRelation {
   no_damage_from: { name: string }[];
 }
 
+interface Ability {
+  name: string;
+  description: string;
+}
+
 
 export class PokemonDetails {
     constructor(
@@ -14,7 +19,7 @@ export class PokemonDetails {
       public height: number,
       public weight: number,
       public types: string[],
-      public abilities: string[],
+      public abilities: Ability[],
       public superWeakTo: string[],
       public weakTo: string[],
       public normal: string[],
@@ -34,7 +39,14 @@ export class PokemonDetails {
       const height = data.height;
       const weight = data.weight;
       const types = data.types.map((type: any) => type.type.name);
-      const abilities = data.abilities.map((ability: any) => ability.ability.name);
+      const abilitiesData = data.abilities;
+      const abilitiesDescriptions = await getAbilitiesDescriptions(abilitiesData);
+      const abilities = abilitiesData.map((abilityData: any, index: number) => {
+        return {
+          name: abilityData.ability.name,
+          description: abilitiesDescriptions[index]
+        };
+      });
       const damageRelations = await getPokemonDamageRelations(id);
       const { pokedexDescription } = await getPokemonSpeciesData(id);
       return new PokemonDetails(
@@ -59,6 +71,18 @@ export class PokemonDetails {
       return undefined;
     }
   };
+
+  async function getAbilitiesDescriptions(abilities: { ability: { url: string } }[]): Promise<string[]> {
+    const descriptions = await Promise.all(
+      abilities.map(async ({ ability: { url } }) => {
+        const response = await fetch(url);
+        const data = await response.json();
+        const englishDescription = data.effect_entries.find((entry: { language: { name: string } }) => entry.language.name === 'en');
+        return englishDescription.effect;
+      })
+    );
+    return descriptions;
+  }
 
   async function getPokemonSpeciesData(pokemonId: number): Promise<{ pokedexDescription: string }> {
     const response = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokemonId}`);

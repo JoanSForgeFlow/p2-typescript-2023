@@ -81,6 +81,13 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
     const immuneTo = pokemon.immuneTo.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
     const heightInMeters = (pokemon.height / 10).toFixed(1) + " m";
     const weightInKilograms = (pokemon.weight / 10).toFixed(1) + " kg";
+    const abilitiesTableRows = pokemon.abilities
+      .map(ability => `
+        <tr>
+          <td class="attribute abilities-text">${ability.name.charAt(0).toUpperCase() + ability.name.slice(1)}:</td>
+          <td class="value abilities-text">${ability.description}</td>
+        </tr>`)
+      .join('\n');
   
     return `
   <html>
@@ -243,19 +250,32 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
         line-height: 1.4;
         text-align: justify;
         width: 80%;
-        max-width: 1000px;
+        max-width: 970px;
         margin-bottom: 16px;
+      }
+      .abilities-table {
+        max-width: 980px;
+      }
+      .abilities-text {
+        font-size: 14px;
+      }
+      .section-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 8px;
+        margin-top: 24px;
       }
     </style>
     <body>
       <h1>${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h1>
+      <h2 class="section-title">Pokédex Description</h2>
+      <p class="description">${pokemon.pokedexDescription}</p>
       <div class="pokemon-container">
         <img src="${pokemon.officialArtworkUrl}" alt="${pokemon.name}" />
         <table>
           <tr><td class="attribute">Type:</td><td class="value">${types}</td></tr>
           <tr><td class="attribute">Height:</td><td class="value">${heightInMeters}</td></tr>
           <tr><td class="attribute">Weight:</td><td class="value">${weightInKilograms}</td></tr>
-          <tr><td class="attribute">Abilities:</td><td class="value">${abilities}</td></tr>
           <tr><td class="attribute">Super Weak To:</td><td class="value">${superWeakTo}</td></tr>
           <tr><td class="attribute">Weak To:</td><td class="value">${weakTo}</td></tr>
           <tr><td class="attribute">Normal Damage:</td><td class="value">${normal}</td></tr>
@@ -264,7 +284,10 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
           <tr><td class="attribute">Immune To:</td><td class="value">${immuneTo}</td></tr>
         </table>
       </div>
-      <p class="description">${pokemon.pokedexDescription}</p>
+      <h2 class="section-title">Pokémon Abilities</h2>
+      <table class="abilities-table">
+        ${abilitiesTableRows}
+      </table>
       <a href="index.html" class="back-button">Back to Menu</a>
     </body>
   </html>`;
