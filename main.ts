@@ -79,6 +79,8 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
     const resistantTo = pokemon.resistantTo.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
     const superResistantTo = pokemon.superResistantTo.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
     const immuneTo = pokemon.immuneTo.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
+    const heightInMeters = (pokemon.height / 10).toFixed(1) + " m";
+    const weightInKilograms = (pokemon.weight / 10).toFixed(1) + " kg";
   
     return `
   <html>
@@ -104,12 +106,12 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
         justify-content: center;
         align-items: center;
         width: 80%;
-        max-width: 800px;
+        max-width: 1000px;
         margin-top: 16px;
       }
       img {
-        width: 60%;
-        max-width: 400px;
+        width: 70%;
+        max-width: 500px;
       }
       table {
         background-color: #f8f8f8;
@@ -118,6 +120,7 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         border-collapse: collapse;
         margin-left: 16px;
+        width: 100%;
       }
       td {
         padding: 8px;
@@ -237,8 +240,8 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
         <img src="${pokemon.officialArtworkUrl}" alt="${pokemon.name}" />
         <table>
           <tr><td class="attribute">Type:</td><td class="value">${types}</td></tr>
-          <tr><td class="attribute">Height:</td><td class="value">${pokemon.height}</td></tr>
-          <tr><td class="attribute">Weight:</td><td class="value">${pokemon.weight}</td></tr>
+          <tr><td class="attribute">Height:</td><td class="value">${heightInMeters}</td></tr>
+          <tr><td class="attribute">Weight:</td><td class="value">${weightInKilograms}</td></tr>
           <tr><td class="attribute">Abilities:</td><td class="value">${abilities}</td></tr>
           <tr><td class="attribute">Super Weak To:</td><td class="value">${superWeakTo}</td></tr>
           <tr><td class="attribute">Weak To:</td><td class="value">${weakTo}</td></tr>
@@ -265,7 +268,7 @@ function head(title: string): string {
 }
 
 (async () => {
-  const pokemons = await loadPokemons(50);
+  const pokemons = await loadPokemons(6);
   const indexHtml = renderPokemonIndex(pokemons);
   await writeFile("index.html", indexHtml);
 
