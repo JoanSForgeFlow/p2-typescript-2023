@@ -3,15 +3,24 @@ import { loadPokemons } from "./pokemon.ts";
 import { loadPokemonDetails, PokemonDetails } from "./pokemon-detail.ts"
 
 function renderPokemonIndex(pokemons: Array<Pokemon>): string {
-    const pokemonLinks = pokemons.map(
+  function generateTypeOptions(): string {
+    const types = [
+      'Normal', 'Fighting', 'Flying', 'Poison', 'Ground', 'Rock', 'Bug', 'Ghost', 'Steel',
+      'Fire', 'Water', 'Grass', 'Electric', 'Psychic', 'Ice', 'Dragon', 'Dark', 'Fairy',
+    ];
+    return types.map(type => `<option value="${type.toLowerCase()}">${type}</option>`).join('\n');
+  }
+
+  const pokemonLinks = pokemons.map(
       (pokemon) => `
-  <li>
-  <a class="pokemon-card" href="${String(pokemon.id).padStart(3, '0')}_${pokemon.name}.html">
-      <div class="pokemon-id">#${String(pokemon.id).padStart(3, '0')}</div>
-      <img src="${pokemon.imageUrl}" alt="${pokemon.name}" />
-      <h2>${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h2>
-    </a>
-  </li>`
+      <li>
+        <a class="pokemon-card" href="${String(pokemon.id).padStart(3, '0')}_${pokemon.name}.html" data-types='${JSON.stringify(pokemon.types)}'>
+          <div class="pokemon-id">#${String(pokemon.id).padStart(3, '0')}</div>
+          <img src="${pokemon.imageUrl}" alt="${pokemon.name}" />
+          <h2>${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h2>
+          <div class="pokemon-types">${pokemon.types.map(type => `<span class="tag">${type}</span>`).join(' ')}</div>
+        </a>
+      </li>`
     ).join('\n');
   
     return `
@@ -60,13 +69,63 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
         font-weight: bold;
         color: #777;
       }
+      .search-filter-container {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        padding: 16px;
+      }
+      .search-input,
+      .type-select {
+        padding: 8px;
+        font-size: 14px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        outline: none;
+      }
+      .tag {
+        background-color: #ccc;
+        border-radius: 4px;
+        padding: 4px 8px;
+        font-size: 12px;
+        color: #333;
+        margin-top: 8px;
+        display: inline-block;
+      }
     </style>
     <body>
       <h1>Pokédex</h1>
+      <div class="search-filter-container">
+        <input type="text" id="search-input" class="search-input" placeholder="Search Pokémon..." />
+        <select id="type-select" class="type-select">
+          <option value="">Filter by type</option>
+          ${generateTypeOptions()}
+        </select>
+      </div>
       <ul>
         ${pokemonLinks}
       </ul>
-    </body>
+      <script>
+        function filterPokemons() {
+          const searchText = document.getElementById("search-input").value.toLowerCase();
+          const selectedType = document.getElementById("type-select").value;
+          const pokemonCards = document.querySelectorAll(".pokemon-card");
+          for (const pokemonCard of pokemonCards) {
+            const pokemonName = pokemonCard.querySelector("h2").textContent.toLowerCase();
+            const pokemonTypes = JSON.parse(pokemonCard.dataset.types);
+            const nameMatch = searchText === "" || pokemonName.includes(searchText);
+            const typeMatch = selectedType === "" || pokemonTypes.includes(selectedType);
+            if (nameMatch && typeMatch) {
+              pokemonCard.parentElement.style.display = "block";
+            } else {
+              pokemonCard.parentElement.style.display = "none";
+            }
+          }
+        }
+        document.getElementById("search-input").addEventListener("input", filterPokemons);
+        document.getElementById("type-select").addEventListener("input", filterPokemons);
+      </script>
+      </body>
   </html>`;
   }
 
@@ -305,7 +364,7 @@ function head(title: string): string {
 }
 
 (async () => {
-  const pokemons = await loadPokemons(6);
+  const pokemons = await loadPokemons(20);
   const indexHtml = renderPokemonIndex(pokemons);
   await writeFile("index.html", indexHtml);
 

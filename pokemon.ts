@@ -5,6 +5,7 @@ export class Pokemon {
       public id: number,
       public name: string,
       public imageUrl: string,
+      public types: string[],
       public officialArtworkUrl?: string
     ) {}
   
@@ -21,7 +22,8 @@ export class Pokemon {
         const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${i}`);
         const data = await response.json();
         const imageUrl = data.sprites.front_default;
-        pokemons.push(new Pokemon(i, data.name, imageUrl));
+        const types = data.types.map((type: any) => type.type.name);
+        pokemons.push(new Pokemon(i, data.name, imageUrl, types));
       } catch (error) {
         console.error("Error fetching data from the PokeAPI:", error);
       }

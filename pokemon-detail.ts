@@ -78,7 +78,7 @@ export class PokemonDetails {
         const response = await fetch(url);
         const data = await response.json();
         const englishDescription = data.effect_entries.find((entry: { language: { name: string } }) => entry.language.name === 'en');
-        return englishDescription.effect;
+        return englishDescription ? englishDescription.effect : 'No description available';
       })
     );
     return descriptions;
