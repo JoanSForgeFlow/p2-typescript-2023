@@ -3,13 +3,6 @@ import { loadPokemons } from "./pokemon.ts";
 import { loadPokemonDetails, PokemonDetails } from "./pokemon-detail.ts"
 
 function renderPokemonIndex(pokemons: Array<Pokemon>): string {
-  function generateTypeOptions(): string {
-    const types = [
-      'Normal', 'Fighting', 'Flying', 'Poison', 'Ground', 'Rock', 'Bug', 'Ghost', 'Steel',
-      'Fire', 'Water', 'Grass', 'Electric', 'Psychic', 'Ice', 'Dragon', 'Dark', 'Fairy',
-    ];
-    return types.map(type => `<option value="${type.toLowerCase()}">${type}</option>`).join('\n');
-  }
 
   const pokemonLinks = pokemons.map(
       (pokemon) => `
@@ -18,7 +11,7 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
           <div class="pokemon-id">#${String(pokemon.id).padStart(3, '0')}</div>
           <img src="${pokemon.imageUrl}" alt="${pokemon.name}" />
           <h2>${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h2>
-          <div class="pokemon-types">${pokemon.types.map(type => `<span class="tag">${type}</span>`).join(' ')}</div>
+          <div class="pokemon-types">${pokemon.types.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ')}</div>
         </a>
       </li>`
     ).join('\n');
@@ -92,14 +85,115 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
         margin-top: 8px;
         display: inline-block;
       }
+      .tag {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        margin-right: 8px;
+        margin-bottom: 8px;
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 1px;
+        white-space: nowrap;
+      }
+      .normal {
+        background-color: #A8A878;
+        color: #fff;
+      }
+      .fighting {
+        background-color: #C03028;
+        color: #fff;
+      }
+      .flying {
+        background-color: #A890F0;
+        color: #fff;
+      }
+      .poison {
+        background-color: #A040A0;
+        color: #fff;
+      }
+      .ground {
+        background-color: #E0C068;
+        color: #fff;
+      }
+      .rock {
+        background-color: #B8A038;
+        color: #fff;
+      }
+      .bug {
+        background-color: #A8B820;
+        color: #fff;
+      }
+      .ghost {
+        background-color: #705898;
+        color: #fff;
+      }
+      .steel {
+        background-color: #B8B8D0;
+        color: #fff;
+      }
+      .fire {
+        background-color: #F08030;
+        color: #fff;
+      }
+      .water {
+        background-color: #6890F0;
+        color: #fff;
+      }
+      .grass {
+        background-color: #78C850;
+        color: #fff;
+      }
+      .electric {
+        background-color: #F8D030;
+        color: #fff;
+      }
+      .psychic {
+        background-color: #F85888;
+        color: #fff;
+      }
+      .ice {
+        background-color: #98D8D8;
+        color: #fff;
+      }
+      .dragon {
+        background-color: #7038F8;
+        color: #fff;
+      }
+      .dark {
+        background-color: #705848;
+        color: #fff;
+      }
+      .fairy {
+        background-color: #EE99AC;
+        color: #fff;
+      }
     </style>
     <body>
       <h1>Pokédex</h1>
       <div class="search-filter-container">
         <input type="text" id="search-input" class="search-input" placeholder="Search Pokémon..." />
         <select id="type-select" class="type-select">
-          <option value="">Filter by type</option>
-          ${generateTypeOptions()}
+          <option value="">All types</option>
+          <option value="normal" class="tag normal">Normal</option>
+          <option value="fighting" class="tag fighting">Fighting</option>
+          <option value="flying" class="tag flying">Flying</option>
+          <option value="poison" class="tag poison">Poison</option>
+          <option value="ground" class="tag ground">Ground</option>
+          <option value="rock" class="tag rock">Rock</option>
+          <option value="bug" class="tag bug">Bug</option>
+          <option value="ghost" class="tag ghost">Ghost</option>
+          <option value="steel" class="tag steel">Steel</option>
+          <option value="fire" class="tag fire">Fire</option>
+          <option value="water" class="tag water">Water</option>
+          <option value="grass" class="tag grass">Grass</option>
+          <option value="electric" class="tag electric">Electric</option>
+          <option value="psychic" class="tag psychic">Psychic</option>
+          <option value="ice" class="tag ice">Ice</option>
+          <option value="dragon" class="tag dragon">Dragon</option>
+          <option value="dark" class="tag dark">Dark</option>
+          <option value="fairy" class="tag fairy">Fairy</option>
         </select>
       </div>
       <ul>
@@ -131,7 +225,6 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
 
   function renderPokemonDetail(pokemon: PokemonDetails): string {
     const types = pokemon.types.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
-    const abilities = pokemon.abilities.join(', ');
     const superWeakTo = pokemon.superWeakTo.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
     const weakTo = pokemon.weakTo.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
     const normal = pokemon.normal.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
@@ -351,7 +444,6 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
     </body>
   </html>`;
   }
-
 
 function head(title: string): string {
   return `
