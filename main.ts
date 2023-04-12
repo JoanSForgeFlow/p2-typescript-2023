@@ -7,11 +7,10 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
   const pokemonLinks = pokemons.map(
       (pokemon) => `
       <li>
-        <a class="pokemon-card" href="${String(pokemon.id).padStart(4, '0')}_${pokemon.name}.html" data-types='${JSON.stringify(pokemon.types)}'>
+        <a class="pokemon-card" href="${String(pokemon.id).padStart(4, '0')}_${pokemon.name}.html" data-types='${JSON.stringify(pokemon.types)}' style="background-image: linear-gradient(135deg, ${getTypeColor(pokemon.types[0])} 0%, ${getTypeColor(pokemon.types[0])} 50%, ${pokemon.types[1] ? getTypeColor(pokemon.types[1]) : getTypeColor(pokemon.types[0])} 50%, ${pokemon.types[1] ? getTypeColor(pokemon.types[1]) : getTypeColor(pokemon.types[0])} 100%);">
           <div class="pokemon-id">#${String(pokemon.id).padStart(4, '0')}</div>
           <img src="${pokemon.imageUrl}" alt="${pokemon.name}" />
           <h2>${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h2>
-          <div class="pokemon-types">${(pokemon.types || []).map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ')}</div>
         </a>
       </li>`
     ).join('\n');
@@ -22,7 +21,7 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
       <meta charset="UTF-8">
       <meta http-equiv="X-UA-Compatible" content="IE=edge">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>"Pokédex"</title>
+      <title>Pokédex</title>
       <link rel="stylesheet" href="css/styles.css">
     </head>
     <body>
@@ -125,6 +124,31 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
     </body>
   </html>`;
   }
+
+function getTypeColor(type) {
+  const colors = {
+    normal: "rgba(168, 168, 120, 0.5)",
+    fighting: "rgba(192, 48, 40, 0.5)",
+    flying: "rgba(168, 144, 240, 0.5)",
+    poison: "rgba(160, 64, 160, 0.5)",
+    ground: "rgba(224, 192, 104, 0.5)",
+    rock: "rgba(184, 160, 56, 0.5)",
+    bug: "rgba(168, 184, 32, 0.5)",
+    ghost: "rgba(112, 88, 152, 0.5)",
+    steel: "rgba(184, 184, 208, 0.5)",
+    fire: "rgba(240, 128, 48, 0.5)",
+    water: "rgba(104, 144, 240, 0.5)",
+    grass: "rgba(120, 200, 80, 0.5)",
+    electric: "rgba(248, 208, 48, 0.5)",
+    psychic: "rgba(248, 88, 136, 0.5)",
+    ice: "rgba(152, 216, 216, 0.5)",
+    dragon: "rgba(112, 56, 248, 0.5)",
+    dark: "rgba(112, 88, 72, 0.5)",
+    fairy: "rgba(238, 153, 172, 0.5)",
+  };
+
+  return colors[type.toLowerCase()] || "#ccc";
+}
 
 function head(title: string): string {
   return `

@@ -24,19 +24,28 @@ margin: 0;
 display: inline-block;
 text-decoration: none;
 color: #333;
-background-color: #f8f8f8;
-border-radius: 8px;
+background-color: #ffffff;
+border-radius: 12px;
 padding: 16px;
-width: 200px;
-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+width: 150px;
+box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 text-align: center;
-transition: transform 0.2s;
+transition: transform 0.2s, box-shadow 0.2s;
 }
+
 .pokemon-card:hover {
 transform: translateY(-4px);
+box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+.pokemon-card img {
+max-width: 100%;
+transition: transform 0.2s;
+}
+.pokemon-card:hover img {
+transform: scale(1.5);
 }
 .pokemon-id {
-font-size: 24px;
+font-size: 18px;
 font-weight: bold;
 color: #777;
 }
