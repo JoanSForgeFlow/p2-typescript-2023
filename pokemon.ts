@@ -18,16 +18,15 @@ export class Pokemon {
     const pokemons: Array<Pokemon> = [];
   
     for (let i = 1; i <= n; i++) {
-      try {
-        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${i}`);
+      const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${i}`);
+      if (response.ok) {
         const data = await response.json();
         const imageUrl = data.sprites.front_default;
         const types = data.types.map((type: any) => type.type.name);
-        pokemons.push(new Pokemon(i, data.name, imageUrl, types));
-      } catch (error) {
-        console.error("Error fetching data from the PokeAPI:", error);
+        pokemons.push(new Pokemon(i, data.species.name, imageUrl, types));
+      } else {
+        console.error(`Error fetching data for Pokémon ID ${i}: ${response.statusText}`);
       }
     }
-  
     return pokemons;
   };

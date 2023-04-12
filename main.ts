@@ -7,11 +7,11 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
   const pokemonLinks = pokemons.map(
       (pokemon) => `
       <li>
-        <a class="pokemon-card" href="${String(pokemon.id).padStart(3, '0')}_${pokemon.name}.html" data-types='${JSON.stringify(pokemon.types)}'>
-          <div class="pokemon-id">#${String(pokemon.id).padStart(3, '0')}</div>
+        <a class="pokemon-card" href="${String(pokemon.id).padStart(4, '0')}_${pokemon.name}.html" data-types='${JSON.stringify(pokemon.types)}'>
+          <div class="pokemon-id">#${String(pokemon.id).padStart(4, '0')}</div>
           <img src="${pokemon.imageUrl}" alt="${pokemon.name}" />
           <h2>${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h2>
-          <div class="pokemon-types">${pokemon.types.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ')}</div>
+          <div class="pokemon-types">${(pokemon.types || []).map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ')}</div>
         </a>
       </li>`
     ).join('\n');
@@ -224,7 +224,7 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
   }
 
   function renderPokemonDetail(pokemon: PokemonDetails): string {
-    const types = pokemon.types.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
+    const types = (pokemon.types || []).map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
     const superWeakTo = pokemon.superWeakTo.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
     const weakTo = pokemon.weakTo.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
     const normal = pokemon.normal.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
@@ -456,13 +456,13 @@ function head(title: string): string {
 }
 
 (async () => {
-  const pokemons = await loadPokemons(20);
+  const pokemons = await loadPokemons(151);
   const indexHtml = renderPokemonIndex(pokemons);
   await writeFile("index.html", indexHtml);
 
   for (const pokemon of pokemons) {
     const pokemonDetail = await loadPokemonDetails(pokemon.id)
     const detailHtml = renderPokemonDetail(pokemonDetail);
-    await writeFile(`${String(pokemonDetail.id).padStart(3, '0')}_${pokemonDetail.name}.html`, detailHtml);
+    await writeFile(`${String(pokemonDetail.id).padStart(4, '0')}_${pokemonDetail.name}.html`, detailHtml);
   }
 })();

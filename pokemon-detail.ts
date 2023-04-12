@@ -51,7 +51,7 @@ export class PokemonDetails {
       const { pokedexDescription } = await getPokemonSpeciesData(id);
       return new PokemonDetails(
         id,
-        data.name,
+        data.species.name,
         imageUrl,
         officialArtworkUrl,
         height,
@@ -88,8 +88,13 @@ export class PokemonDetails {
     const response = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokemonId}`);
     const data = await response.json();
     const englishFlavorTextEntry = data.flavor_text_entries.find((entry: { language: { name: string } }) => entry.language.name === 'en');
-    const pokedexDescription = englishFlavorTextEntry.flavor_text.replace(/\n/g, ' ').replace(/\f/g, ' ');
-    return { pokedexDescription };
+    if (englishFlavorTextEntry) {
+      const pokedexDescription = englishFlavorTextEntry.flavor_text.replace(/(?:\r\n|\r|\n)/g, ' ');
+      return { pokedexDescription };
+    } else {
+      console.error(`No English flavor text entry found for Pokémon ID ${pokemonId}`);
+      return { pokedexDescription: 'No description available' };
+    }
   }
 
   async function getPokemonDamageRelations(pokemonId: number): Promise<{
