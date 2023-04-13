@@ -7,7 +7,7 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
   const pokemonLinks = pokemons.map(
       (pokemon) => `
       <li>
-        <a class="pokemon-card" href="${String(pokemon.id).padStart(4, '0')}_${pokemon.name}.html" data-types='${JSON.stringify(pokemon.types)}' style="background-image: linear-gradient(135deg, ${getTypeColor(pokemon.types[0])} 0%, ${getTypeColor(pokemon.types[0])} 50%, ${pokemon.types[1] ? getTypeColor(pokemon.types[1]) : getTypeColor(pokemon.types[0])} 50%, ${pokemon.types[1] ? getTypeColor(pokemon.types[1]) : getTypeColor(pokemon.types[0])} 100%);">
+      <a class="pokemon-card" href="${String(pokemon.id).padStart(4, '0')}_${pokemon.name}.html" data-types='${JSON.stringify(pokemon.types)}' data-baby='${pokemon.is_baby}' data-legendary='${pokemon.is_legendary}' data-mythical='${pokemon.is_mythical}' style="background-image: linear-gradient(135deg, ${getTypeColor(pokemon.types[0])} 0%, ${getTypeColor(pokemon.types[0])} 50%, ${pokemon.types[1] ? getTypeColor(pokemon.types[1]) : getTypeColor(pokemon.types[0])} 50%, ${pokemon.types[1] ? getTypeColor(pokemon.types[1]) : getTypeColor(pokemon.types[0])} 100%);">
           <div class="pokemon-id">#${String(pokemon.id).padStart(4, '0')}</div>
           <img src="${pokemon.imageUrl}" alt="${pokemon.name}" />
           <h2>${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h2>
@@ -49,6 +49,14 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
           <option value="dark" class="tag dark">Dark</option>
           <option value="fairy" class="tag fairy">Fairy</option>
         </select>
+        <div class="special-filter-container">
+          <input type="checkbox" id="baby-filter" value="baby" />
+          <label for="baby-filter">Babies</label>
+          <input type="checkbox" id="legendary-filter" value="legendary" />
+          <label for="legendary-filter">Legendaries</label>
+          <input type="checkbox" id="mythical-filter" value="mythical" />
+          <label for="mythical-filter">Mythics</label>
+        </div>
       </div>
       <ul>
         ${pokemonLinks}
@@ -57,13 +65,22 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
         function filterPokemons() {
           const searchText = document.getElementById("search-input").value.toLowerCase();
           const selectedType = document.getElementById("type-select").value;
+          const babyFilter = document.getElementById("baby-filter").checked;
+          const legendaryFilter = document.getElementById("legendary-filter").checked;
+          const mythicalFilter = document.getElementById("mythical-filter").checked;
           const pokemonCards = document.querySelectorAll(".pokemon-card");
           for (const pokemonCard of pokemonCards) {
             const pokemonName = pokemonCard.querySelector("h2").textContent.toLowerCase();
             const pokemonTypes = JSON.parse(pokemonCard.dataset.types);
+            const isBaby = JSON.parse(pokemonCard.dataset.baby);
+            const isLegendary = JSON.parse(pokemonCard.dataset.legendary);
+            const isMythical = JSON.parse(pokemonCard.dataset.mythical);
             const nameMatch = searchText === "" || pokemonName.includes(searchText);
             const typeMatch = selectedType === "" || pokemonTypes.includes(selectedType);
-            if (nameMatch && typeMatch) {
+            const babyMatch = !babyFilter || isBaby;
+            const legendaryMatch = !legendaryFilter || isLegendary;
+            const mythicalMatch = !mythicalFilter || isMythical;
+            if (nameMatch && typeMatch && babyMatch && legendaryMatch && mythicalMatch) {
               pokemonCard.parentElement.style.display = "block";
             } else {
               pokemonCard.parentElement.style.display = "none";
@@ -72,6 +89,9 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
         }
         document.getElementById("search-input").addEventListener("input", filterPokemons);
         document.getElementById("type-select").addEventListener("input", filterPokemons);
+        document.getElementById("baby-filter").addEventListener("change", filterPokemons);
+        document.getElementById("legendary-filter").addEventListener("change", filterPokemons);
+        document.getElementById("mythical-filter").addEventListener("change", filterPokemons);
       </script>
       </body>
   </html>`;
@@ -162,7 +182,7 @@ function head(title: string): string {
 }
 
 (async () => {
-  const pokemons = await loadPokemons(151);
+  const pokemons = await loadPokemons(493);
   const indexHtml = renderPokemonIndex(pokemons);
   await writeFile("index.html", indexHtml);
 
