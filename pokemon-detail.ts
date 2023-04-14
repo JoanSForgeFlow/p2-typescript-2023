@@ -72,6 +72,10 @@ export class PokemonDetails {
     }
   };
 
+  function cleanText(text: string): string {
+    return text.replace(/[\x00-\x1F\x7F-\x9F]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
   async function getAbilitiesDescriptions(abilities: { ability: { url: string } }[]): Promise<string[]> {
     const descriptions = await Promise.all(
       abilities.map(async ({ ability: { url } }) => {
@@ -89,7 +93,7 @@ export class PokemonDetails {
     const data = await response.json();
     const englishFlavorTextEntry = data.flavor_text_entries.find((entry: { language: { name: string } }) => entry.language.name === 'en');
     if (englishFlavorTextEntry) {
-      const pokedexDescription = englishFlavorTextEntry.flavor_text.replace(/(?:\r\n|\r|\n)/g, ' ');
+      const pokedexDescription = cleanText(englishFlavorTextEntry.flavor_text);
       return { pokedexDescription };
     } else {
       console.error(`No English flavor text entry found for Pokémon ID ${pokemonId}`);
