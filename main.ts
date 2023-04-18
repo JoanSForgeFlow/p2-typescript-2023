@@ -1,13 +1,17 @@
 import { writeFile } from "fs/promises";
-import { loadPokemons } from "./pokemon.ts";
-import { loadPokemonDetails, PokemonDetails } from "./pokemon-detail.ts"
+import { loadPokemons, Pokemon } from "./pokemon";
+import { loadPokemonDetails, PokemonDetails } from "./pokemon-detail"
+
+function toPokemonType(type: string): PokemonType {
+  return type as PokemonType;
+}
 
 function renderPokemonIndex(pokemons: Array<Pokemon>): string {
 
   const pokemonLinks = pokemons.map(
       (pokemon) => `
       <li>
-      <a class="pokemon-card" href="${String(pokemon.id).padStart(4, '0')}_${pokemon.name}.html" data-types='${JSON.stringify(pokemon.types)}' data-baby='${pokemon.is_baby}' data-legendary='${pokemon.is_legendary}' data-mythical='${pokemon.is_mythical}' style="background-image: linear-gradient(135deg, ${getTypeColor(pokemon.types[0])} 0%, ${getTypeColor(pokemon.types[0])} 50%, ${pokemon.types[1] ? getTypeColor(pokemon.types[1]) : getTypeColor(pokemon.types[0])} 50%, ${pokemon.types[1] ? getTypeColor(pokemon.types[1]) : getTypeColor(pokemon.types[0])} 100%);">
+      <a class="pokemon-card" href="${String(pokemon.id).padStart(4, '0')}_${pokemon.name}.html" data-types='${JSON.stringify(pokemon.types)}' data-baby='${pokemon.is_baby}' data-legendary='${pokemon.is_legendary}' data-mythical='${pokemon.is_mythical}' style="background-image: linear-gradient(135deg, ${getTypeColor(toPokemonType(pokemon.types[0]))} 0%, ${getTypeColor(toPokemonType(pokemon.types[0]))} 50%, ${pokemon.types[1] ? getTypeColor(toPokemonType(pokemon.types[1])) : getTypeColor(toPokemonType(pokemon.types[0]))} 50%, ${pokemon.types[1] ? getTypeColor(toPokemonType(pokemon.types[1])) : getTypeColor(toPokemonType(pokemon.types[0]))} 100%);">
           <div class="pokemon-id">#${String(pokemon.id).padStart(4, '0')}</div>
           <img src="${pokemon.imageUrl}" alt="${pokemon.name}" />
           <h2>${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h2>
@@ -145,8 +149,28 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
   </html>`;
   }
 
-function getTypeColor(type) {
-  const colors = {
+  type PokemonType =
+  | 'normal'
+  | 'fighting'
+  | 'flying'
+  | 'poison'
+  | 'ground'
+  | 'rock'
+  | 'bug'
+  | 'ghost'
+  | 'steel'
+  | 'fire'
+  | 'water'
+  | 'grass'
+  | 'electric'
+  | 'psychic'
+  | 'ice'
+  | 'dragon'
+  | 'dark'
+  | 'fairy';
+
+function getTypeColor(type: PokemonType): string {
+  const colors: Record<PokemonType, string> = {
     normal: "rgba(168, 168, 120, 0.5)",
     fighting: "rgba(192, 48, 40, 0.5)",
     flying: "rgba(168, 144, 240, 0.5)",
@@ -166,8 +190,7 @@ function getTypeColor(type) {
     dark: "rgba(112, 88, 72, 0.5)",
     fairy: "rgba(238, 153, 172, 0.5)",
   };
-
-  return colors[type.toLowerCase()] || "#ccc";
+  return colors[type] || "#ccc";
 }
 
 function head(title: string): string {
@@ -187,7 +210,11 @@ function head(title: string): string {
   await writeFile("index.html", indexHtml);
 
   for (const pokemon of pokemons) {
-    const pokemonDetail = await loadPokemonDetails(pokemon.id)
+    const pokemonDetail = await loadPokemonDetails(pokemon.id);
+    if (!pokemonDetail) {
+      console.warn(`Failed to load details for Pokémon with ID ${pokemon.id}.`);
+      continue;
+    }
     const detailHtml = renderPokemonDetail(pokemonDetail);
     await writeFile(`${String(pokemonDetail.id).padStart(4, '0')}_${pokemonDetail.name}.html`, detailHtml);
   }
