@@ -9,6 +9,10 @@ interface Ability {
   description: string;
 }
 
+interface Stat {
+  name: string;
+  value: number;
+}
 
 export class PokemonDetails {
     constructor(
@@ -27,6 +31,7 @@ export class PokemonDetails {
       public superResistantTo: string[],
       public immuneTo: string[],
       public pokedexDescription: string,
+      public stats: Stat[]
     ) {}
   }
 
@@ -47,6 +52,12 @@ export class PokemonDetails {
           description: abilitiesDescriptions[index]
         };
       });
+      const stats = data.stats.map((stat: any) => {
+        return {
+          name: stat.stat.name,
+          value: stat.base_stat
+        };
+      });
       const damageRelations = await getPokemonDamageRelations(id);
       const { pokedexDescription } = await getPokemonSpeciesData(id);
       return new PokemonDetails(
@@ -64,7 +75,8 @@ export class PokemonDetails {
         damageRelations.resistantTo,
         damageRelations.superResistantTo,
         damageRelations.immuneTo,
-        pokedexDescription
+        pokedexDescription,
+        stats
       );
     } catch (error) {
       console.error("Error fetching data from the PokeAPI:", error);

@@ -118,6 +118,38 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
           <td class="value abilities-text">${ability.description}</td>
         </tr>`)
       .join('\n');
+    const getStatBar = (value: number, maxValue: number) => {
+      const percentage = Math.round((value / maxValue) * 100);
+      const greenThreshold = 35;
+      const yellowThreshold = 20;
+
+      let backgroundColor;
+      if (percentage >= greenThreshold) {
+        backgroundColor = 'limegreen';
+      } else if (percentage >= yellowThreshold) {
+        backgroundColor = 'gold';
+      } else {
+        backgroundColor = 'tomato';
+      }
+
+      return `
+        <div class="stat-bar-container">
+          <div class="stat-bar">
+            <div class="stat-value" style="width: ${percentage}%; background-color: ${backgroundColor};"></div>
+          </div>
+        </div>
+      `;
+    };
+
+    const statsTableRows = pokemon.stats
+      .map(stat => `
+        <tr>
+          <td class="attribute abilities-text">${stat.name.charAt(0).toUpperCase() + stat.name.slice(1)}:</td>
+          <td class="value abilities-text">${stat.value}</td>
+          <td class="value abilities-bar">${getStatBar(stat.value, 255)}</td>
+        </tr>`)
+      .join('\n');
+
   
     return `
   <html>
@@ -140,10 +172,20 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
           <tr><td class="attribute">Immune To:</td><td class="value">${immuneTo}</td></tr>
         </table>
       </div>
-      <h2 class="section-title">Pokémon Abilities</h2>
-      <table class="abilities-table">
-        ${abilitiesTableRows}
-      </table>
+      <div class="table-container">
+        <table class="abilities-table">
+          <tr>
+            <th colspan="2" class="section-title-cell">Pokémon Abilities</th>
+          </tr>
+          ${abilitiesTableRows}
+        </table>
+        <table>
+          <tr>
+            <th colspan="3" class="section-title-cell">Pokémon Stats</th>
+          </tr>
+          ${statsTableRows}
+        </table>
+      </div>
       <a href="index.html" class="back-button">Back to Menu</a>
     </body>
   </html>`;
@@ -205,7 +247,7 @@ function head(title: string): string {
 }
 
 (async () => {
-  const pokemons = await loadPokemons(493);
+  const pokemons = await loadPokemons(386);
   const indexHtml = renderPokemonIndex(pokemons);
   await writeFile("index.html", indexHtml);
 
