@@ -201,3 +201,54 @@ font-weight: bold;
 margin-bottom: 8px;
 margin-top: 24px;
 }
+@media screen and (max-width: 1024px) {
+.pokemon-container {
+flex-direction: column;
+}
+
+table {
+margin-left: 0;
+width: 100%;
+}
+
+.table-container {
+flex-direction: column;
+}
+
+.abilities-table {
+margin-bottom: 16px;
+}
+
+img {
+max-width: 400px;
+margin-bottom: 16px;
+}
+}
+
+@media screen and (max-width: 767px) {
+.pokemon-container {
+width: 90%;
+}
+
+.description {
+width: 90%;
+}
+
+.table-container {
+width: 90%;
+}
+
+img {
+max-width: 300px;
+}
+}
+
+@media screen and (max-width: 480px) {
+img {
+max-width: 250px;
+}
+
+.abilities-bar {
+width: 200px;
+}
+}
