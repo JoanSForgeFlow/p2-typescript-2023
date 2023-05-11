@@ -25,7 +25,7 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
       <meta charset="UTF-8">
       <meta http-equiv="X-UA-Compatible" content="IE=edge">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Pokédex</title>
+      <title>PokeQuickDex</title>
       <link rel="stylesheet" href="css/styles.css">
       <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5418523060607609"
       crossorigin="anonymous"></script>
@@ -33,7 +33,7 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
       <script defer src="/_vercel/insights/script.js"></script>
     </head>
     <body>
-      <h1>Pokédex</h1>
+      <h1>Poke Quick Dex</h1>
       <div class="search-filter-container">
         <input type="text" id="search-input" class="search-input" placeholder="Search Pokémon..." />
         <select id="type-select" class="type-select">
@@ -162,7 +162,7 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
   <html>
     ${head(pokemon.name)}
     <body>
-      <h1>${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)} <span class="pokemon-id">(#${String(pokemon.id).padStart(4, '0')})</span></h1>
+      <h1>${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)} <span class="pokemon-id">#${String(pokemon.id).padStart(4, '0')}</span></h1>
       <h2 class="section-title">Pokédex Description</h2>
       <p class="description">${pokemon.pokedexDescription}</p>
       <div class="pokemon-container">
@@ -255,7 +255,7 @@ function head(title: string): string {
 }
 
 (async () => {
-  const pokemons = await loadPokemons(50);
+  const pokemons = await loadPokemons(1010);
   const indexHtml = renderPokemonIndex(pokemons);
   await writeFile("index.html", indexHtml);
 
