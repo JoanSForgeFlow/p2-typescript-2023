@@ -162,7 +162,7 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
   <html>
     ${head(pokemon.name)}
     <body>
-      <h1>${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h1>
+      <h1>${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)} <span class="pokemon-id">(#${String(pokemon.id).padStart(4, '0')})</span></h1>
       <h2 class="section-title">Pokédex Description</h2>
       <p class="description">${pokemon.pokedexDescription}</p>
       <div class="pokemon-container">
