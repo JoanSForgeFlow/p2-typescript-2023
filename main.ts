@@ -27,6 +27,10 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Pokédex</title>
       <link rel="stylesheet" href="css/styles.css">
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5418523060607609"
+      crossorigin="anonymous"></script>
+      <link rel="canonical" href="https://pokequickdex.vercel.app" />
+      <script defer src="/_vercel/insights/script.js"></script>
     </head>
     <body>
       <h1>Pokédex</h1>
@@ -243,6 +247,7 @@ function head(title: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title}</title>
   <link rel="stylesheet" href="css/pokemon_styles.css">
+  <script defer src="/_vercel/insights/script.js"></script>
 </head>`;
 }
 
