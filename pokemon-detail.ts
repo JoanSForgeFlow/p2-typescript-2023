@@ -7,6 +7,7 @@ interface DamageRelation {
 interface Ability {
   name: string;
   description: string;
+  is_hidden: boolean;
 }
 
 interface Stat {
@@ -49,7 +50,8 @@ export class PokemonDetails {
       const abilities = abilitiesData.map((abilityData: any, index: number) => {
         return {
           name: abilityData.ability.name,
-          description: abilitiesDescriptions[index]
+          description: abilitiesDescriptions[index],
+          is_hidden: abilityData.is_hidden,
         };
       });
       const stats = data.stats.map((stat: any) => {

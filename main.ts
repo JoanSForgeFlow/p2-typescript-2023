@@ -118,7 +118,7 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
     const abilitiesTableRows = pokemon.abilities
       .map(ability => `
         <tr>
-          <td class="attribute abilities-text">${ability.name.charAt(0).toUpperCase() + ability.name.slice(1)}:</td>
+          <td class="attribute abilities-text">${ability.name.charAt(0).toUpperCase() + ability.name.slice(1) + (ability.is_hidden ? ' <i>(hidden)</i>': '')}:</td>
           <td class="value abilities-text">${ability.description}</td>
         </tr>`)
       .join('\n');
