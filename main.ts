@@ -116,12 +116,15 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
     const heightInMeters = (pokemon.height / 10).toFixed(1) + " m";
     const weightInKilograms = (pokemon.weight / 10).toFixed(1) + " kg";
     const abilitiesTableRows = pokemon.abilities
-      .map(ability => `
+    .map(ability => {
+      const hiddenTag = ability.is_hidden ? `<span class="hidden-ability">hidden</span>` : '';
+      return `
         <tr>
-          <td class="attribute abilities-text">${ability.name.charAt(0).toUpperCase() + ability.name.slice(1) + (ability.is_hidden ? ' <i>(hidden)</i>': '')}:</td>
+          <td class="attribute abilities-text">${ability.name.charAt(0).toUpperCase() + ability.name.slice(1)}: ${hiddenTag}</td>
           <td class="value abilities-text">${ability.description}</td>
-        </tr>`)
-      .join('\n');
+        </tr>`;
+    })
+    .join('\n'); 
     const getStatBar = (value: number, maxValue: number) => {
       const percentage = Math.round((value / maxValue) * 100);
       const greenThreshold = 35;
@@ -252,7 +255,7 @@ function head(title: string): string {
 }
 
 (async () => {
-  const pokemons = await loadPokemons(386);
+  const pokemons = await loadPokemons(50);
   const indexHtml = renderPokemonIndex(pokemons);
   await writeFile("index.html", indexHtml);
 
