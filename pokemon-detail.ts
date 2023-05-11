@@ -15,6 +15,11 @@ interface Stat {
   value: number;
 }
 
+interface DexDescription {
+  version: string;
+  flavor_text: string;
+}
+
 export class PokemonDetails {
     constructor(
       public id: number,
@@ -31,7 +36,7 @@ export class PokemonDetails {
       public resistantTo: string[],
       public superResistantTo: string[],
       public immuneTo: string[],
-      public pokedexDescription: string,
+      public pokedexDescriptions: DexDescription[],
       public stats: Stat[]
     ) {}
   }
@@ -61,7 +66,7 @@ export class PokemonDetails {
         };
       });
       const damageRelations = await getPokemonDamageRelations(id);
-      const { pokedexDescription } = await getPokemonSpeciesData(id);
+      const pokedexDescriptions = await getPokemonDescriptions(id);
       return new PokemonDetails(
         id,
         data.species.name,
@@ -77,7 +82,7 @@ export class PokemonDetails {
         damageRelations.resistantTo,
         damageRelations.superResistantTo,
         damageRelations.immuneTo,
-        pokedexDescription,
+        pokedexDescriptions,
         stats
       );
     } catch (error) {
@@ -102,16 +107,18 @@ export class PokemonDetails {
     return descriptions;
   }
 
-  async function getPokemonSpeciesData(pokemonId: number): Promise<{ pokedexDescription: string }> {
+  async function getPokemonDescriptions(pokemonId: number): Promise<pokedexDescriptions: DexDescription[]> {
     const response = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokemonId}`);
     const data = await response.json();
-    const englishFlavorTextEntry = data.flavor_text_entries.find((entry: { language: { name: string } }) => entry.language.name === 'en');
-    if (englishFlavorTextEntry) {
-      const pokedexDescription = cleanText(englishFlavorTextEntry.flavor_text);
-      return { pokedexDescription };
+    const englishFlavorTextEntries = data.flavor_text_entries.filter((entry: { language: { name: string } }) => entry.language.name === 'en');
+    if (englishFlavorTextEntries) {
+      const pokedexDescriptions: DexDescription[] = englishFlavorTextEntries.map((entry: { flavor_text: string; version: { name: string } }) => {
+        return { 'version': entry.version.name; 'flavor_text': cleanText(entry.flavor_text) };
+      });
+      return pokedexDescriptions;
     } else {
       console.error(`No English flavor text entry found for Pokémon ID ${pokemonId}`);
-      return { pokedexDescription: 'No description available' };
+      return [{ 'version': 'no version'; 'flavor_text': 'No description available' }];
     }
   }
 
