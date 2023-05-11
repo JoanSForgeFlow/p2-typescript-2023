@@ -151,7 +151,7 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
     const statsTableRows = pokemon.stats
       .map(stat => `
         <tr>
-          <td class="attribute abilities-text">${stat.name.charAt(0).toUpperCase() + stat.name.slice(1)}:</td>
+          <td class="attribute abilities-text">${(stat.name === 'hp') ? 'HP': stat.name.charAt(0).toUpperCase() + stat.name.slice(1)}:</td>
           <td class="value abilities-text">${stat.value}</td>
           <td class="value abilities-bar">${getStatBar(stat.value, 255)}</td>
         </tr>`)
