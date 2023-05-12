@@ -13,6 +13,40 @@ padding: 16px;
 margin: 0;
 width: 100%;
 }
+.back-to-menu {
+color: #ffffff;
+text-decoration: none;
+font-size: 16px;
+font-weight: bold;
+margin-right: 10px;
+display: inline-block;
+vertical-align: middle;
+background-color: #ff0000;
+padding: 5px 10px;
+border-radius: 5px;
+border: 1px solid #ffffff;
+}
+.back-to-menu i {
+color: #ffffff;
+font-size: 20px;
+}
+.back-to-menu:hover {
+text-decoration: none;
+background-color: #cc0000;
+}
+.h1-container {
+position: relative;
+}
+.h1-container::before {
+content: '';
+position: absolute;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background-color: #ff0000;
+z-index: -1;
+}
 .pokemon-container {
 display: flex;
 justify-content: center;

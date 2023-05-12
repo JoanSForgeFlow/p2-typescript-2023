@@ -162,7 +162,7 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
   <html>
     ${head(pokemon.name)}
     <body>
-      <h1>${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)} <span class="pokemon-id">#${String(pokemon.id).padStart(4, '0')}</span></h1>
+    <h1><a href="index.html" class="back-to-menu"><i class="fas fa-arrow-left"></i></a> ${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)} <span class="pokemon-id">#${String(pokemon.id).padStart(4, '0')}</span></h1>
       <h2 class="section-title">Pokédex Description</h2>
       <p class="description">${pokemon.pokedexDescription}</p>
       <div class="pokemon-container">
@@ -251,6 +251,7 @@ function head(title: string): string {
   <title>${title}</title>
   <link rel="stylesheet" href="css/pokemon_styles.css">
   <script defer src="/_vercel/insights/script.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" />
 </head>`;
 }
 
