@@ -157,6 +157,15 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
         </tr>`)
       .join('\n');
 
+   const descriptionsSelect = pokemon.pokedexDescriptions[]
+      .map(description => `
+        <option value="${description.version}" class="tag">${description.version.charAt(0).toUpperCase() + description.version.slice(1)}</option>`)
+      .join('\n');
+
+   const descriptionsRows = pokemon.pokedexDescriptions[]
+      .map(description => `
+        <p class="description" data-version='${description.version}'>${description.flavor_text}</p>`)
+      .join('\n');
   
     return `
   <html>
@@ -164,7 +173,9 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
     <body>
     <h1><a href="index.html" class="back-to-menu"><i class="fas fa-arrow-left"></i></a> ${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)} <span class="pokemon-id">#${String(pokemon.id).padStart(4, '0')}</span></h1>
       <h2 class="section-title">Pokédex Description</h2>
-      <p class="description">${pokemon.pokedexDescription}</p>
+      <select id="version-select" class="version-select">
+      ${descriptionsSelect}
+      </select> ${descriptionsRows}
       <div class="pokemon-container">
         <img src="${pokemon.officialArtworkUrl}" alt="${pokemon.name}" />
         <table>
@@ -194,6 +205,23 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
         </table>
       </div>
       <a href="index.html" class="back-button">Back to Menu</a>
+      <script>
+        function filterVersions() {
+          const selectedVersion = document.getElementById("version-select").value;
+          const dexDescriptions = document.querySelectorAll(".description");
+          for (const dexDescription of dexDescriptions) {
+            const version = JSON.parse(dexDescription.dataset.version);
+            const first_version = JSON.parse(dexDescriptions[0].dataset.version);
+            const versionMatch = (selectedVersion === "" && first_version === version) || (selectedVersion === version);
+            if (versionMatch) {
+              dexDescription.parentElement.style.display = "inline-block";
+            } else {
+              dexDescription.parentElement.style.display = "none";
+            }
+          }
+        }
+        document.getElementById("version-select").addEventListener("input", filterVersions);
+      </script>
     </body>
   </html>`;
   }

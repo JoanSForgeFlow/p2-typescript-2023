@@ -69,7 +69,8 @@ flex-wrap: wrap;
 }
 
 .search-input,
-.type-select {
+.type-select,
+.version-select {
 padding: 8px;
 font-size: 14px;
 border-radius: 4px;
