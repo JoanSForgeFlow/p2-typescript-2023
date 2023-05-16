@@ -107,18 +107,18 @@ export class PokemonDetails {
     return descriptions;
   }
 
-  async function getPokemonDescriptions(pokemonId: number): Promise<pokedexDescriptions: DexDescription[]> {
+  async function getPokemonDescriptions(pokemonId: number): Promise<DexDescription[]> {
     const response = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokemonId}`);
     const data = await response.json();
     const englishFlavorTextEntries = data.flavor_text_entries.filter((entry: { language: { name: string } }) => entry.language.name === 'en');
-    if (englishFlavorTextEntries) {
+    if (englishFlavorTextEntries.length > 0) {
       const pokedexDescriptions: DexDescription[] = englishFlavorTextEntries.map((entry: { flavor_text: string; version: { name: string } }) => {
-        return { 'version': entry.version.name; 'flavor_text': cleanText(entry.flavor_text) };
+        return { 'version': entry.version.name, 'flavor_text': cleanText(entry.flavor_text) };
       });
       return pokedexDescriptions;
     } else {
       console.error(`No English flavor text entry found for Pokémon ID ${pokemonId}`);
-      return [{ 'version': 'no version'; 'flavor_text': 'No description available' }];
+      return [{ 'version': 'no version', 'flavor_text': 'No description available' }];
     }
   }
 

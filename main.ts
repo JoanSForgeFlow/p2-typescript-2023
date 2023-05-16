@@ -157,14 +157,14 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
         </tr>`)
       .join('\n');
 
-   const descriptionsSelect = pokemon.pokedexDescriptions[]
+   const descriptionsSelect = pokemon.pokedexDescriptions
       .map(description => `
         <option value="${description.version}" class="tag">${description.version.charAt(0).toUpperCase() + description.version.slice(1)}</option>`)
       .join('\n');
 
-   const descriptionsRows = pokemon.pokedexDescriptions[]
-      .map(description => `
-        <p class="description" data-version='${description.version}'>${description.flavor_text}</p>`)
+    const descriptionsRows = pokemon.pokedexDescriptions
+      .map((description, index) => `
+        <p class="description" data-version='${description.version}' style="${index !== 0 ? 'display: none;' : ''}">${description.flavor_text}</p>`)
       .join('\n');
   
     return `
@@ -172,10 +172,6 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
     ${head(pokemon.name)}
     <body>
     <h1><a href="index.html" class="back-to-menu"><i class="fas fa-arrow-left"></i></a> ${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)} <span class="pokemon-id">#${String(pokemon.id).padStart(4, '0')}</span></h1>
-      <h2 class="section-title">Pokédex Description</h2>
-      <select id="version-select" class="version-select">
-      ${descriptionsSelect}
-      </select> ${descriptionsRows}
       <div class="pokemon-container">
         <img src="${pokemon.officialArtworkUrl}" alt="${pokemon.name}" />
         <table>
@@ -204,23 +200,32 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
           ${statsTableRows}
         </table>
       </div>
+      <h2 class="section-title">Pokédex Description</h2>
+      <div class="pokedex-container">
+        <div class="version-container">
+          <select id="version-select" class="version-select">
+            ${descriptionsSelect}
+          </select>
+        </div>
+        <div class="description-container">
+          ${descriptionsRows}
+        </div>
+      </div>
       <a href="index.html" class="back-button">Back to Menu</a>
       <script>
         function filterVersions() {
           const selectedVersion = document.getElementById("version-select").value;
           const dexDescriptions = document.querySelectorAll(".description");
           for (const dexDescription of dexDescriptions) {
-            const version = JSON.parse(dexDescription.dataset.version);
-            const first_version = JSON.parse(dexDescriptions[0].dataset.version);
-            const versionMatch = (selectedVersion === "" && first_version === version) || (selectedVersion === version);
-            if (versionMatch) {
-              dexDescription.parentElement.style.display = "inline-block";
+            const version = dexDescription.dataset.version;
+            if (selectedVersion === version) {
+              dexDescription.style.display = "block";
             } else {
-              dexDescription.parentElement.style.display = "none";
+              dexDescription.style.display = "none";
             }
           }
         }
-        document.getElementById("version-select").addEventListener("input", filterVersions);
+        document.getElementById("version-select").addEventListener("change", filterVersions);
       </script>
     </body>
   </html>`;
@@ -284,7 +289,7 @@ function head(title: string): string {
 }
 
 (async () => {
-  const pokemons = await loadPokemons(1010);
+  const pokemons = await loadPokemons(20);
   const indexHtml = renderPokemonIndex(pokemons);
   await writeFile("index.html", indexHtml);
 
