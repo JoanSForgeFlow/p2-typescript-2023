@@ -45,6 +45,8 @@ export class PokemonDetails {
     try {
       const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
       const data = await response.json();
+      const response2 = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${id}`);
+      const data2 = await response2.json();
       const imageUrl = data.sprites.front_default;
       const officialArtworkUrl = data.sprites.other["official-artwork"].front_default;
       const height = data.height;
@@ -67,9 +69,10 @@ export class PokemonDetails {
       });
       const damageRelations = await getPokemonDamageRelations(id);
       const pokedexDescriptions = await getPokemonDescriptions(id);
+      const name = data2.names.find((entry: { language: { name: string } }) => entry.language.name === 'en');
       return new PokemonDetails(
         id,
-        data.species.name,
+        name ? name.name : data.species.name,
         imageUrl,
         officialArtworkUrl,
         height,
