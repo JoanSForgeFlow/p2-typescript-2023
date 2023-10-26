@@ -24,6 +24,7 @@ export class PokemonDetails {
     constructor(
       public id: number,
       public name: string,
+      public codename: string,
       public imageUrl: string,
       public officialArtworkUrl: string,
       public height: number,
@@ -69,10 +70,13 @@ export class PokemonDetails {
       });
       const damageRelations = await getPokemonDamageRelations(id);
       const pokedexDescriptions = await getPokemonDescriptions(id);
-      const name = data2.names.find((entry: { language: { name: string } }) => entry.language.name === 'en');
+      const codename = data.species.name;
+      const nameEntry = data2.names.find((entry: { language: { name: string } }) => entry.language.name === 'en');
+      const name = nameEntry ? nameEntry.name : codename.charAt(0).toUpperCase() + codename.slice(1);
       return new PokemonDetails(
         id,
-        name ? name.name : data.species.name,
+        name,
+        codename,
         imageUrl,
         officialArtworkUrl,
         height,

@@ -11,10 +11,10 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
   const pokemonLinks = pokemons.map(
       (pokemon) => `
       <li>
-      <a class="pokemon-card" href="${String(pokemon.id).padStart(4, '0')}_${pokemon.name}.html" data-types='${JSON.stringify(pokemon.types)}' data-baby='${pokemon.is_baby}' data-legendary='${pokemon.is_legendary}' data-mythical='${pokemon.is_mythical}' style="background-image: linear-gradient(135deg, ${getTypeColor(toPokemonType(pokemon.types[0]))} 0%, ${getTypeColor(toPokemonType(pokemon.types[0]))} 50%, ${pokemon.types[1] ? getTypeColor(toPokemonType(pokemon.types[1])) : getTypeColor(toPokemonType(pokemon.types[0]))} 50%, ${pokemon.types[1] ? getTypeColor(toPokemonType(pokemon.types[1])) : getTypeColor(toPokemonType(pokemon.types[0]))} 100%);">
+      <a class="pokemon-card" href="${String(pokemon.id).padStart(4, '0')}_${pokemon.codename}.html" data-types='${JSON.stringify(pokemon.types)}' data-baby='${pokemon.is_baby}' data-legendary='${pokemon.is_legendary}' data-mythical='${pokemon.is_mythical}' style="background-image: linear-gradient(135deg, ${getTypeColor(toPokemonType(pokemon.types[0]))} 0%, ${getTypeColor(toPokemonType(pokemon.types[0]))} 50%, ${pokemon.types[1] ? getTypeColor(toPokemonType(pokemon.types[1])) : getTypeColor(toPokemonType(pokemon.types[0]))} 50%, ${pokemon.types[1] ? getTypeColor(toPokemonType(pokemon.types[1])) : getTypeColor(toPokemonType(pokemon.types[0]))} 100%);">
           <div class="pokemon-id">#${String(pokemon.id).padStart(4, '0')}</div>
           <img src="${pokemon.imageUrl}" alt="${pokemon.name}" />
-          <h2>${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h2>
+          <h2>${pokemon.name}</h2>
         </a>
       </li>`
     ).join('\n');
@@ -83,7 +83,7 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
             const isBaby = JSON.parse(pokemonCard.dataset.baby);
             const isLegendary = JSON.parse(pokemonCard.dataset.legendary);
             const isMythical = JSON.parse(pokemonCard.dataset.mythical);
-            const nameMatch = searchText === "" || pokemonName.includes(searchText);
+            const nameMatch = searchText === "" || pokemonName.includes(searchText.toLowerCase());
             const typeMatch = selectedType === "" || pokemonTypes.includes(selectedType);
             const babyMatch = !babyFilter || isBaby;
             const legendaryMatch = !legendaryFilter || isLegendary;
@@ -171,7 +171,7 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
   <html>
     ${head(pokemon.name)}
     <body>
-    <h1><a href="index.html" class="back-to-menu"><i class="fas fa-arrow-left"></i></a> ${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)} <span class="pokemon-id">#${String(pokemon.id).padStart(4, '0')}</span></h1>
+    <h1><a href="index.html" class="back-to-menu"><i class="fas fa-arrow-left"></i></a> ${pokemon.name} <span class="pokemon-id">#${String(pokemon.id).padStart(4, '0')}</span></h1>
       <div class="pokemon-container">
         <img src="${pokemon.officialArtworkUrl}" alt="${pokemon.name}" />
         <table>
@@ -300,6 +300,6 @@ function head(title: string): string {
       continue;
     }
     const detailHtml = renderPokemonDetail(pokemonDetail);
-    await writeFile(`${String(pokemonDetail.id).padStart(4, '0')}_${pokemonDetail.name}.html`, detailHtml);
+    await writeFile(`${String(pokemonDetail.id).padStart(4, '0')}_${pokemonDetail.codename}.html`, detailHtml);
   }
 })();

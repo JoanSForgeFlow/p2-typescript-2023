@@ -4,6 +4,7 @@ export class Pokemon {
     constructor(
       public id: number,
       public name: string,
+      public codename: string,
       public imageUrl: string,
       public types: string[],
       public is_baby: boolean,
@@ -33,8 +34,11 @@ export class Pokemon {
             const is_baby = speciesData.is_baby;
             const is_legendary = speciesData.is_legendary;
             const is_mythical = speciesData.is_mythical;
+            const codename = data.species.name;
+            const nameEntry = data2.names.find((entry: { language: { name: string } }) => entry.language.name === 'en');
+            const name = nameEntry ? nameEntry.name : codename.charAt(0).toUpperCase() + codename.slice(1);
 
-            pokemons.push(new Pokemon(i, data.species.name, imageUrl, types, is_baby, is_legendary, is_mythical));
+            pokemons.push(new Pokemon(i, name, codename, imageUrl, types, is_baby, is_legendary, is_mythical));
         } else {
             console.error(`Error fetching data for Pokémon ID ${i}: ${response.statusText}`);
         }
