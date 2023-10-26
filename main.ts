@@ -289,7 +289,7 @@ function head(title: string): string {
 }
 
 (async () => {
-  const pokemons = await loadPokemons(20);
+  const pokemons = await loadPokemons(1010);
   const indexHtml = renderPokemonIndex(pokemons);
   await writeFile("index.html", indexHtml);
 

@@ -18,10 +18,12 @@ export class Pokemon {
     }
   }
   
-  export const loadPokemons = async (n: number) => {
+  export const loadPokemons = async (n?: number) => {
     const pokemons: Array<Pokemon> = [];
 
-    for (let i = 1; i <= n; i++) {
+    let i = 1;
+    while (n ? (i <= n) : true) {
+
         const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${i}`);
         const speciesResponse = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${i}`);
 
@@ -41,7 +43,9 @@ export class Pokemon {
             pokemons.push(new Pokemon(i, name, codename, imageUrl, types, is_baby, is_legendary, is_mythical));
         } else {
             console.error(`Error fetching data for Pokémon ID ${i}: ${response.statusText}`);
+            break;
         }
+        i++;
     }
     return pokemons;
 };
