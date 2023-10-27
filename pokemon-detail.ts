@@ -11,6 +11,7 @@ interface Ability {
   name: string;
   description: string;
   is_hidden: boolean;
+  generation?: string;
 }
 
 interface Stat {
@@ -96,6 +97,7 @@ export class PokemonDetails {
       public types: string[],
       public abilities: Ability[],
       public varieties: Variety[],
+      public pastAbilities: Ability[],
       public superWeakTo: string[],
       public weakTo: string[],
       public normal: string[],
@@ -137,6 +139,26 @@ export class PokemonDetails {
           name: abilityData.ability.name,
           description: abilitiesDescriptions[index],
           is_hidden: abilityData.is_hidden,
+        };
+      });
+      const pastAbilitiesData: { ability: { name: string, url: string }, is_hidden: boolean, generation?: string }[] = [];
+      for (const pastAbilityData of data.past_abilities) {
+        const generationName = await getGenerationName(pastAbilityData.generation);
+        for (const abilityData of pastAbilityData.abilities.filter((a: any) => a.ability)) {
+          pastAbilitiesData.push({
+            ability: abilityData.ability,
+            is_hidden: abilityData.is_hidden,
+            generation: generationName,
+          });
+        }
+      }
+      const pastAbilitiesDescriptions = await getAbilitiesDescriptions(pastAbilitiesData);
+      const pastAbilities = pastAbilitiesData.map((abilityData: any, index: number) => {
+        return {
+          name: abilityData.ability.name,
+          description: pastAbilitiesDescriptions[index],
+          is_hidden: abilityData.is_hidden,
+          generation: abilityData.generation,
         };
       });
       const stats = data.stats.map((stat: any) => {
@@ -184,6 +206,7 @@ export class PokemonDetails {
         types,
         abilities,
         varieties,
+        pastAbilities,
         damageRelations.superWeakTo,
         damageRelations.weakTo,
         damageRelations.normal,
@@ -221,6 +244,12 @@ export class PokemonDetails {
       })
     );
     return descriptions;
+  }
+
+  async function getGenerationName(generationData: { url: string }): Promise<string> {
+    const data = await cachedFetchJson(generationData.url);
+    const englishName = data.names.find((entry: { language: { name: string } }) => entry.language.name === 'en').name;
+    return englishName;
   }
 
   async function getPokemonDescriptions(pokemonId: number): Promise<DexDescription[]> {

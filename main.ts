@@ -946,6 +946,17 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
           </tr>`;
       })
       .join('\n');
+    const pastAbilitiesTableRows = pokemon.pastAbilities
+      .map(ability => {
+        const hiddenTag = ability.is_hidden ? `<span class="hidden-ability">hidden</span>` : '';
+        const generationTag = ability.generation ? `<span class="generation-ability">until ${ability.generation}</span>` : '';
+        return `
+          <tr>
+            <td class="attribute abilities-text">${ability.name.charAt(0).toUpperCase() + ability.name.slice(1)}: ${hiddenTag} ${generationTag}</td>
+            <td class="value abilities-text">${ability.description}</td>
+          </tr>`;
+      })
+      .join('\n');
 
     const formOptions = clusterVarieties.map(v =>
       `<option value="${v.url}" ${v.is_default ? 'selected' : ''}>${formLabel(v)}</option>`
@@ -1099,6 +1110,12 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
             </tr>
             <tbody id="abilities-body">
             ${abilitiesTableRows}
+            </tbody>
+            <tr id="past-abilities-title" style="${pokemon.pastAbilities.length > 0 ? '' : 'display: none;'}">
+              <th colspan="2" class="section-title-cell">Pokémon Old Abilities</th>
+            </tr>
+            <tbody id="past-abilities-body">
+            ${pastAbilitiesTableRows}
             </tbody>
           </table>
           <table>
@@ -1467,6 +1484,26 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
                 return \`<tr><td class="attribute abilities-text">\${name}: \${hiddenTag}</td><td class="value abilities-text">\${description}</td></tr>\`;
               }));
               document.getElementById("abilities-body").innerHTML = abilitiesHtml.join('');
+
+              // Old abilities
+              const pastAbilitiesHtml = (await Promise.all((data.past_abilities || []).map(async p => {
+                const gRes = await fetch(p.generation.url);
+                const gData = await gRes.json();
+                const gEntry = gData.names.find(e => e.language.name === 'en');
+                const generationName = gEntry ? gEntry.name : p.generation.name;
+                return Promise.all(p.abilities.filter(a => a.ability).map(async a => {
+                  const aRes = await fetch(a.ability.url);
+                  const aData = await aRes.json();
+                  const entry = aData.effect_entries.find(e => e.language.name === 'en');
+                  const description = entry ? entry.effect : 'No description available';
+                  const hiddenTag = a.is_hidden ? '<span class="hidden-ability">hidden</span>' : '';
+                  const generationTag = \`<span class="generation-ability">until \${generationName}</span>\`;
+                  const name = a.ability.name.charAt(0).toUpperCase() + a.ability.name.slice(1);
+                  return \`<tr><td class="attribute abilities-text">\${name}: \${hiddenTag} \${generationTag}</td><td class="value abilities-text">\${description}</td></tr>\`;
+                }));
+              }))).flat();
+              document.getElementById("past-abilities-body").innerHTML = pastAbilitiesHtml.join('');
+              document.getElementById("past-abilities-title").style.display = pastAbilitiesHtml.length > 0 ? '' : 'none';
 
               // Stats
               const stats = data.stats.map(s => ({ name: s.stat.name, value: s.base_stat }));
