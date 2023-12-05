@@ -13,7 +13,7 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
       <li>
       <a class="pokemon-card" href="${String(pokemon.id).padStart(4, '0')}_${pokemon.codename}.html" data-types='${JSON.stringify(pokemon.types)}' data-baby='${pokemon.is_baby}' data-legendary='${pokemon.is_legendary}' data-mythical='${pokemon.is_mythical}' style="background-image: linear-gradient(135deg, ${getTypeColor(toPokemonType(pokemon.types[0]))} 0%, ${getTypeColor(toPokemonType(pokemon.types[0]))} 50%, ${pokemon.types[1] ? getTypeColor(toPokemonType(pokemon.types[1])) : getTypeColor(toPokemonType(pokemon.types[0]))} 50%, ${pokemon.types[1] ? getTypeColor(toPokemonType(pokemon.types[1])) : getTypeColor(toPokemonType(pokemon.types[0]))} 100%);">
           <div class="pokemon-id">#${String(pokemon.id).padStart(4, '0')}</div>
-          <img src="${pokemon.imageUrl}" alt="${pokemon.name}" />
+          <img src="${pokemon.officialArtworkUrl}" alt="${pokemon.name}" />
           <h2>${pokemon.name}</h2>
         </a>
       </li>`

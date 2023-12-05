@@ -10,7 +10,7 @@ export class Pokemon {
       public is_baby: boolean,
       public is_legendary: boolean,
       public is_mythical: boolean,
-      public officialArtworkUrl?: string
+      public officialArtworkUrl: string
     ) {}
   
     get displayName() {
@@ -30,6 +30,7 @@ export class Pokemon {
             const speciesData = await speciesResponse.json();
 
             const imageUrl = data.sprites.front_default;
+            const officialArtworkUrl = data.sprites.other["official-artwork"].front_default;
             const types = data.types.map((type: any) => type.type.name);
             const is_baby = speciesData.is_baby;
             const is_legendary = speciesData.is_legendary;
@@ -38,7 +39,7 @@ export class Pokemon {
             const nameEntry = speciesData.names.find((entry: { language: { name: string } }) => entry.language.name === 'en');
             const name = nameEntry ? nameEntry.name : codename.charAt(0).toUpperCase() + codename.slice(1);
 
-            pokemons.push(new Pokemon(i, name, codename, imageUrl, types, is_baby, is_legendary, is_mythical));
+            pokemons.push(new Pokemon(i, name, codename, imageUrl, types, is_baby, is_legendary, is_mythical, officialArtworkUrl));
         } else {
             console.error(`Error fetching data for Pokémon ID ${i}: ${response.statusText}`);
         }
