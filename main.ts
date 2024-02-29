@@ -28,6 +28,8 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
       <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5418523060607609" crossorigin="anonymous"></script>
       <link rel="canonical" href="https://pokequickdex.vercel.app" />
       <script defer src="/_vercel/insights/script.js"></script>
+      <script async="async" data-cfasync="false" src="//pl22655287.profitablegatecpm.com/ffd936ac032b992ec6029a788638e152/invoke.js"></script>
+      <div id="container-ffd936ac032b992ec6029a788638e152"></div>
     </head>
     <body>
       <h1>Poke Quick Dex</h1>
@@ -299,11 +301,13 @@ function head(title: string): string {
   <link rel="stylesheet" href="css/pokemon_styles.css">
   <script defer src="/_vercel/insights/script.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" />
+  <script async="async" data-cfasync="false" src="//pl22655287.profitablegatecpm.com/ffd936ac032b992ec6029a788638e152/invoke.js"></script>
+  <div id="container-ffd936ac032b992ec6029a788638e152"></div>
 </head>`;
 }
 
 (async () => {
-  const pokemons = await loadPokemons(151);
+  const pokemons = await loadPokemons(1025);
   const indexHtml = renderPokemonIndex(pokemons);
   await writeFile("index.html", indexHtml);
 
