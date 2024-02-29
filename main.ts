@@ -7,18 +7,16 @@ function toPokemonType(type: string): PokemonType {
 }
 
 function renderPokemonIndex(pokemons: Array<Pokemon>): string {
-
-  const pokemonLinks = pokemons.map(
-      (pokemon) => `
+    const pokemonLinks = pokemons.map((pokemon) => `
       <li>
-      <a class="pokemon-card" href="${String(pokemon.id).padStart(4, '0')}_${pokemon.codename}.html" data-types='${JSON.stringify(pokemon.types)}' data-baby='${pokemon.is_baby}' data-legendary='${pokemon.is_legendary}' data-mythical='${pokemon.is_mythical}' style="background-image: linear-gradient(135deg, ${getTypeColor(toPokemonType(pokemon.types[0]))} 0%, ${getTypeColor(toPokemonType(pokemon.types[0]))} 50%, ${pokemon.types[1] ? getTypeColor(toPokemonType(pokemon.types[1])) : getTypeColor(toPokemonType(pokemon.types[0]))} 50%, ${pokemon.types[1] ? getTypeColor(toPokemonType(pokemon.types[1])) : getTypeColor(toPokemonType(pokemon.types[0]))} 100%);">
+        <a class="pokemon-card" href="${String(pokemon.id).padStart(4, '0')}_${pokemon.codename}.html" data-types='${JSON.stringify(pokemon.types)}' data-baby='${pokemon.is_baby}' data-legendary='${pokemon.is_legendary}' data-mythical='${pokemon.is_mythical}' style="background-image: linear-gradient(135deg, ${getTypeColor(toPokemonType(pokemon.types[0]))} 0%, ${getTypeColor(toPokemonType(pokemon.types[0]))} 50%, ${pokemon.types[1] ? getTypeColor(toPokemonType(pokemon.types[1])) : getTypeColor(toPokemonType(pokemon.types[0]))} 50%, ${pokemon.types[1] ? getTypeColor(toPokemonType(pokemon.types[1])) : getTypeColor(toPokemonType(pokemon.types[0]))} 100%);">
           <div class="pokemon-id">#${String(pokemon.id).padStart(4, '0')}</div>
-          <img src="${pokemon.officialArtworkUrl}" alt="${pokemon.name}" />
+          <img class="lazyload" data-src="${pokemon.officialArtworkUrl}" alt="${pokemon.name}" />
           <h2>${pokemon.name}</h2>
         </a>
-      </li>`
-    ).join('\n');
-  
+      </li>
+    `).join('\n');
+
     return `
   <html>
     <head>
@@ -27,8 +25,7 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>PokeQuickDex</title>
       <link rel="stylesheet" href="css/styles.css">
-      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5418523060607609"
-      crossorigin="anonymous"></script>
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5418523060607609" crossorigin="anonymous"></script>
       <link rel="canonical" href="https://pokequickdex.vercel.app" />
       <script defer src="/_vercel/insights/script.js"></script>
     </head>
@@ -66,42 +63,59 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
           <label for="mythical-filter">Mythics</label>
         </div>
       </div>
-      <ul>
-        ${pokemonLinks}
-      </ul>
+      <ul>${pokemonLinks}</ul>
       <script>
-        function filterPokemons() {
-          const searchText = document.getElementById("search-input").value.toLowerCase();
-          const selectedType = document.getElementById("type-select").value;
-          const babyFilter = document.getElementById("baby-filter").checked;
-          const legendaryFilter = document.getElementById("legendary-filter").checked;
-          const mythicalFilter = document.getElementById("mythical-filter").checked;
-          const pokemonCards = document.querySelectorAll(".pokemon-card");
-          for (const pokemonCard of pokemonCards) {
-            const pokemonName = pokemonCard.querySelector("h2").textContent.toLowerCase();
-            const pokemonTypes = JSON.parse(pokemonCard.dataset.types);
-            const isBaby = JSON.parse(pokemonCard.dataset.baby);
-            const isLegendary = JSON.parse(pokemonCard.dataset.legendary);
-            const isMythical = JSON.parse(pokemonCard.dataset.mythical);
-            const nameMatch = searchText === "" || pokemonName.includes(searchText.toLowerCase());
-            const typeMatch = selectedType === "" || pokemonTypes.includes(selectedType);
-            const babyMatch = !babyFilter || isBaby;
-            const legendaryMatch = !legendaryFilter || isLegendary;
-            const mythicalMatch = !mythicalFilter || isMythical;
-            if (nameMatch && typeMatch && babyMatch && legendaryMatch && mythicalMatch) {
-              pokemonCard.parentElement.style.display = "block";
-            } else {
-              pokemonCard.parentElement.style.display = "none";
-            }
+        document.addEventListener("DOMContentLoaded", function() {
+          const checkboxes = document.querySelectorAll('.special-filter-container input[type="checkbox"]');
+          checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+              checkboxes.forEach(box => {
+                if (box !== checkbox) box.checked = false;
+              });
+              filterPokemons();
+            });
+          });
+          function filterPokemons() {
+            const searchText = document.getElementById("search-input").value.toLowerCase();
+            const selectedType = document.getElementById("type-select").value;
+            const babyFilter = document.getElementById("baby-filter").checked;
+            const legendaryFilter = document.getElementById("legendary-filter").checked;
+            const mythicalFilter = document.getElementById("mythical-filter").checked;
+            const pokemonCards = document.querySelectorAll(".pokemon-card");
+
+            pokemonCards.forEach((pokemonCard) => {
+              const pokemonName = pokemonCard.querySelector("h2").textContent.toLowerCase();
+              const pokemonTypes = JSON.parse(pokemonCard.dataset.types);
+              const isBaby = JSON.parse(pokemonCard.dataset.baby);
+              const isLegendary = JSON.parse(pokemonCard.dataset.legendary);
+              const isMythical = JSON.parse(pokemonCard.dataset.mythical);
+              const nameMatch = !searchText || pokemonName.includes(searchText);
+              const typeMatch = !selectedType || pokemonTypes.includes(selectedType);
+              const filterMatch = (babyFilter && isBaby) || (legendaryFilter && isLegendary) || (mythicalFilter && isMythical) || (!babyFilter && !legendaryFilter && !mythicalFilter);
+
+              pokemonCard.parentElement.style.display = nameMatch && typeMatch && filterMatch ? "block" : "none";
+            });
           }
-        }
-        document.getElementById("search-input").addEventListener("input", filterPokemons);
-        document.getElementById("type-select").addEventListener("input", filterPokemons);
-        document.getElementById("baby-filter").addEventListener("change", filterPokemons);
-        document.getElementById("legendary-filter").addEventListener("change", filterPokemons);
-        document.getElementById("mythical-filter").addEventListener("change", filterPokemons);
+          document.getElementById("search-input").addEventListener("input", filterPokemons);
+          document.getElementById("type-select").addEventListener("input", filterPokemons);
+          const lazyloadImages = document.querySelectorAll("img.lazyload");
+          let imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                const image = entry.target;
+                image.src = image.dataset.src;
+                image.classList.remove("lazyload");
+                imageObserver.unobserve(image);
+              }
+            });
+          });
+
+          lazyloadImages.forEach((image) => {
+            imageObserver.observe(image);
+          });
+        });
       </script>
-      </body>
+    </body>
   </html>`;
   }
 
@@ -289,7 +303,7 @@ function head(title: string): string {
 }
 
 (async () => {
-  const pokemons = await loadPokemons(20);
+  const pokemons = await loadPokemons(493);
   const indexHtml = renderPokemonIndex(pokemons);
   await writeFile("index.html", indexHtml);
 
