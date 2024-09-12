@@ -138,16 +138,17 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
           <td class="value abilities-text">${ability.description}</td>
         </tr>`;
     })
-    .join('\n'); 
-    const getStatBar = (value: number, maxValue: number) => {
-      const percentage = Math.round((value / maxValue) * 100);
-      const greenThreshold = 35;
-      const yellowThreshold = 20;
+    .join('\n');
+    const getStatBar = (value: number, sumValues: number, maxValue: number) => {
+      const absolute_percentage = Math.round((value / maxValue) * 100);
+      const relative_percentage = Math.round((value / sumValues) * 100);
+      const greenThreshold = 100 / (6 - 1);  // 6: because there are 6 stats
+      const yellowThreshold = 100 / (6 + 1); // +-1: to move a bit more/less from 6
 
       let backgroundColor;
-      if (percentage >= greenThreshold) {
+      if (relative_percentage >= greenThreshold) {
         backgroundColor = 'limegreen';
-      } else if (percentage >= yellowThreshold) {
+      } else if (relative_percentage >= yellowThreshold) {
         backgroundColor = 'gold';
       } else {
         backgroundColor = 'tomato';
@@ -156,20 +157,22 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
       return `
         <div class="stat-bar-container">
           <div class="stat-bar">
-            <div class="stat-value" style="width: ${percentage}%; background-color: ${backgroundColor};"></div>
+            <div class="stat-value" style="width: ${absolute_percentage}%; background-color: ${backgroundColor};"></div>
           </div>
         </div>
       `;
     };
 
     const statsTableRows = pokemon.stats
-      .map(stat => `
+      .map(stat => {
+        const sum_stats = pokemon.stats.reduce((a, b) => a.value + b.value);
+        return `
         <tr>
           <td class="attribute abilities-text">${(stat.name === 'hp') ? 'HP': stat.name.charAt(0).toUpperCase() + stat.name.slice(1)}:</td>
           <td class="value abilities-text">${stat.value}</td>
-          <td class="value abilities-bar">${getStatBar(stat.value, 255)}</td>
-        </tr>`)
-      .join('\n');
+          <td class="value abilities-bar">${getStatBar(stat.value, sum_stats, 255)}</td>
+        </tr>`;
+      }).join('\n');
 
    const descriptionsSelect = pokemon.pokedexDescriptions
       .map(description => `
