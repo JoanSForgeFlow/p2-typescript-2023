@@ -9,7 +9,7 @@ function toPokemonType(type: string): PokemonType {
 function renderPokemonIndex(pokemons: Array<Pokemon>): string {
     const pokemonLinks = pokemons.map((pokemon) => `
       <li>
-        <a class="pokemon-card" href="${String(pokemon.id).padStart(4, '0')}_${pokemon.codename}.html" data-types='${JSON.stringify(pokemon.types)}' data-baby='${pokemon.is_baby}' data-legendary='${pokemon.is_legendary}' data-mythical='${pokemon.is_mythical}' style="background-image: linear-gradient(135deg, ${getTypeColor(toPokemonType(pokemon.types[0]))} 0%, ${getTypeColor(toPokemonType(pokemon.types[0]))} 50%, ${pokemon.types[1] ? getTypeColor(toPokemonType(pokemon.types[1])) : getTypeColor(toPokemonType(pokemon.types[0]))} 50%, ${pokemon.types[1] ? getTypeColor(toPokemonType(pokemon.types[1])) : getTypeColor(toPokemonType(pokemon.types[0]))} 100%);">
+        <a class="pokemon-card" href="${String(pokemon.id).padStart(4, '0')}_details.html" data-types='${JSON.stringify(pokemon.types)}' data-baby='${pokemon.is_baby}' data-legendary='${pokemon.is_legendary}' data-mythical='${pokemon.is_mythical}' style="background-image: linear-gradient(135deg, ${getTypeColor(toPokemonType(pokemon.types[0]))} 0%, ${getTypeColor(toPokemonType(pokemon.types[0]))} 50%, ${pokemon.types[1] ? getTypeColor(toPokemonType(pokemon.types[1])) : getTypeColor(toPokemonType(pokemon.types[0]))} 50%, ${pokemon.types[1] ? getTypeColor(toPokemonType(pokemon.types[1])) : getTypeColor(toPokemonType(pokemon.types[0]))} 100%);">
           <div class="pokemon-id">#${String(pokemon.id).padStart(4, '0')}</div>
           <img class="lazyload" data-src="${pokemon.imageUrl}" alt="${pokemon.name}" />
           <h2>${pokemon.name}</h2>
@@ -119,7 +119,7 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
   </html>`;
   }
 
-  function renderPokemonDetail(pokemon: PokemonDetails): string {
+  function renderPokemonDetail(pokemon: PokemonDetails, totalPokemons: number): string {
     const types = (pokemon.types || []).map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
     const superWeakTo = pokemon.superWeakTo.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
     const weakTo = pokemon.weakTo.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
@@ -129,21 +129,25 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
     const immuneTo = pokemon.immuneTo.map(type => `<span class="tag ${type.toLowerCase()}">${type}</span>`).join(' ');
     const heightInMeters = (pokemon.height / 10).toFixed(1) + " m";
     const weightInKilograms = (pokemon.weight / 10).toFixed(1) + " kg";
+    const prevId = pokemon.id > 1 ? pokemon.id - 1 : totalPokemons;
+    const nextId = pokemon.id < totalPokemons ? pokemon.id + 1 : 1;
+    const prevFile = `${String(prevId).padStart(4, '0')}_details.html`;
+    const nextFile = `${String(nextId).padStart(4, '0')}_details.html`;
     const abilitiesTableRows = pokemon.abilities
-    .map(ability => {
-      const hiddenTag = ability.is_hidden ? `<span class="hidden-ability">hidden</span>` : '';
-      return `
-        <tr>
-          <td class="attribute abilities-text">${ability.name.charAt(0).toUpperCase() + ability.name.slice(1)}: ${hiddenTag}</td>
-          <td class="value abilities-text">${ability.description}</td>
-        </tr>`;
-    })
-    .join('\n'); 
+      .map(ability => {
+        const hiddenTag = ability.is_hidden ? `<span class="hidden-ability">hidden</span>` : '';
+        return `
+          <tr>
+            <td class="attribute abilities-text">${ability.name.charAt(0).toUpperCase() + ability.name.slice(1)}: ${hiddenTag}</td>
+            <td class="value abilities-text">${ability.description}</td>
+          </tr>`;
+      })
+      .join('\n'); 
+  
     const getStatBar = (value: number, maxValue: number) => {
       const percentage = Math.round((value / maxValue) * 100);
       const greenThreshold = 35;
       const yellowThreshold = 20;
-
       let backgroundColor;
       if (percentage >= greenThreshold) {
         backgroundColor = 'limegreen';
@@ -152,7 +156,6 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
       } else {
         backgroundColor = 'tomato';
       }
-
       return `
         <div class="stat-bar-container">
           <div class="stat-bar">
@@ -161,7 +164,7 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
         </div>
       `;
     };
-
+  
     const statsTableRows = pokemon.stats
       .map(stat => `
         <tr>
@@ -170,80 +173,86 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
           <td class="value abilities-bar">${getStatBar(stat.value, 255)}</td>
         </tr>`)
       .join('\n');
-
-   const descriptionsSelect = pokemon.pokedexDescriptions
+  
+    const descriptionsSelect = pokemon.pokedexDescriptions
       .map(description => `
         <option value="${description.version}" class="tag">${description.version.charAt(0).toUpperCase() + description.version.slice(1)}</option>`)
       .join('\n');
-
+  
     const descriptionsRows = pokemon.pokedexDescriptions
       .map((description, index) => `
         <p class="description" data-version='${description.version}' style="${index !== 0 ? 'display: none;' : ''}">${description.flavor_text}</p>`)
       .join('\n');
-  
+    
     return `
-  <html>
-    ${head(pokemon.name)}
-    <body>
-    <h1><a href="index.html" class="back-to-menu"><i class="fas fa-arrow-left"></i></a> ${pokemon.name} <span class="pokemon-id">#${String(pokemon.id).padStart(4, '0')}</span></h1>
-      <div class="pokemon-container">
-        <img src="${pokemon.officialArtworkUrl}" alt="${pokemon.name}" />
-        <table>
-          <tr><td class="attribute">Type:</td><td class="value">${types}</td></tr>
-          <tr><td class="attribute">Height:</td><td class="value">${heightInMeters}</td></tr>
-          <tr><td class="attribute">Weight:</td><td class="value">${weightInKilograms}</td></tr>
-          <tr><td class="attribute">Super Weak To:</td><td class="value">${superWeakTo}</td></tr>
-          <tr><td class="attribute">Weak To:</td><td class="value">${weakTo}</td></tr>
-          <tr><td class="attribute">Normal Damage:</td><td class="value">${normal}</td></tr>
-          <tr><td class="attribute">Resistant To:</td><td class="value">${resistantTo}</td></tr>
-          <tr><td class="attribute">Super Resistant To:</td><td class="value">${superResistantTo}</td></tr>
-          <tr><td class="attribute">Immune To:</td><td class="value">${immuneTo}</td></tr>
-        </table>
-      </div>
-      <div class="table-container">
-        <table class="abilities-table">
-          <tr>
-            <th colspan="2" class="section-title-cell">Pokémon Abilities</th>
-          </tr>
-          ${abilitiesTableRows}
-        </table>
-        <table>
-          <tr>
-            <th colspan="3" class="section-title-cell">Pokémon Stats</th>
-          </tr>
-          ${statsTableRows}
-        </table>
-      </div>
-      <h2 class="section-title">Pokédex Description</h2>
-      <div class="pokedex-container">
-        <div class="version-container">
-          <select id="version-select" class="version-select">
-            ${descriptionsSelect}
-          </select>
+    <html>
+      ${head(pokemon.name)}
+      <body>
+        <h1>
+        <a href="index.html" class="back-to-menu"><i class="fas fa-arrow-left"></i></a> ${pokemon.name} <span class="pokemon-id">#${String(pokemon.id).padStart(4, '0')}</span>
+        <div class="navigation-buttons">
+          <a href="${prevFile}" class="nav-button minimal-button">❮</a>
+          <a href="${nextFile}" class="nav-button minimal-button">❯</a>
         </div>
-        <div class="description-container">
-          ${descriptionsRows}
+        </h1>
+        <div class="pokemon-container">
+          <img src="${pokemon.officialArtworkUrl}" alt="${pokemon.name}" />
+          <table>
+            <tr><td class="attribute">Type:</td><td class="value">${types}</td></tr>
+            <tr><td class="attribute">Height:</td><td class="value">${heightInMeters}</td></tr>
+            <tr><td class="attribute">Weight:</td><td class="value">${weightInKilograms}</td></tr>
+            <tr><td class="attribute">Super Weak To:</td><td class="value">${superWeakTo}</td></tr>
+            <tr><td class="attribute">Weak To:</td><td class="value">${weakTo}</td></tr>
+            <tr><td class="attribute">Normal Damage:</td><td class="value">${normal}</td></tr>
+            <tr><td class="attribute">Resistant To:</td><td class="value">${resistantTo}</td></tr>
+            <tr><td class="attribute">Super Resistant To:</td><td class="value">${superResistantTo}</td></tr>
+            <tr><td class="attribute">Immune To:</td><td class="value">${immuneTo}</td></tr>
+          </table>
         </div>
-      </div>
-      <a href="index.html" class="back-button">Back to Menu</a>
-      <script>
-        function filterVersions() {
-          const selectedVersion = document.getElementById("version-select").value;
-          const dexDescriptions = document.querySelectorAll(".description");
-          for (const dexDescription of dexDescriptions) {
-            const version = dexDescription.dataset.version;
-            if (selectedVersion === version) {
-              dexDescription.style.display = "block";
-            } else {
-              dexDescription.style.display = "none";
+        <div class="table-container">
+          <table class="abilities-table">
+            <tr>
+              <th colspan="2" class="section-title-cell">Pokémon Abilities</th>
+            </tr>
+            ${abilitiesTableRows}
+          </table>
+          <table>
+            <tr>
+              <th colspan="3" class="section-title-cell">Pokémon Stats</th>
+            </tr>
+            ${statsTableRows}
+          </table>
+        </div>
+        <h2 class="section-title">Pokédex Description</h2>
+        <div class="pokedex-container">
+          <div class="version-container">
+            <select id="version-select" class="version-select">
+              ${descriptionsSelect}
+            </select>
+          </div>
+          <div class="description-container">
+            ${descriptionsRows}
+          </div>
+        </div>
+        <a href="index.html" class="back-button">Back to Menu</a>
+        <script>
+          function filterVersions() {
+            const selectedVersion = document.getElementById("version-select").value;
+            const dexDescriptions = document.querySelectorAll(".description");
+            for (const dexDescription of dexDescriptions) {
+              const version = dexDescription.dataset.version;
+              if (selectedVersion === version) {
+                dexDescription.style.display = "block";
+              } else {
+                dexDescription.style.display = "none";
+              }
             }
           }
-        }
-        document.getElementById("version-select").addEventListener("change", filterVersions);
-      </script>
-    </body>
-  </html>`;
-  }
+          document.getElementById("version-select").addEventListener("change", filterVersions);
+        </script>
+      </body>
+    </html>`;
+  }  
 
   type PokemonType =
   | 'normal'
@@ -313,7 +322,7 @@ function head(title: string): string {
       console.warn(`Failed to load details for Pokémon with ID ${pokemon.id}.`);
       continue;
     }
-    const detailHtml = renderPokemonDetail(pokemonDetail);
-    await writeFile(`${String(pokemonDetail.id).padStart(4, '0')}_${pokemonDetail.codename}.html`, detailHtml);
+    const detailHtml = renderPokemonDetail(pokemonDetail, 1025);
+    await writeFile(`${String(pokemonDetail.id).padStart(4, '0')}_details.html`, detailHtml);
   }
 })();

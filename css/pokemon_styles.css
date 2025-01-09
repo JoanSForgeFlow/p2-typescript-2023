@@ -34,6 +34,39 @@ font-size: 20px;
 text-decoration: none;
 background-color: #cc0000;
 }
+.navigation-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 8px 0;
+  gap: 30px;
+}
+.nav-button {
+  background-color: #ff0000;
+  color: #ffffff;
+  padding: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  text-decoration: none;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  transition: all 0.3s ease;
+  text-align: center;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 25px;
+  height: 25px;
+}
+.nav-button:hover {
+  background-color: #cc0000;
+  transform: scale(1.2);
+  border-color: #ffcccc;
+}
+.minimal-button {
+  font-size: 16px;
+  line-height: 1;
+}
 .h1-container {
 position: relative;
 }
