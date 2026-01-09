@@ -1,5 +1,3 @@
-import { PokemonDetails } from "./pokemon-detail.js";
-
 export class Pokemon {
     constructor(
       public id: number,
@@ -10,7 +8,8 @@ export class Pokemon {
       public is_baby: boolean,
       public is_legendary: boolean,
       public is_mythical: boolean,
-      public officialArtworkUrl: string
+      public officialArtworkUrl: string,
+      public generation: string
     ) {}
   
     get displayName() {
@@ -38,8 +37,9 @@ export class Pokemon {
             const codename = data.species.name;
             const nameEntry = speciesData.names.find((entry: { language: { name: string } }) => entry.language.name === 'en');
             const name = nameEntry ? nameEntry.name : codename.charAt(0).toUpperCase() + codename.slice(1);
+            const generation = speciesData.generation?.name || 'unknown';
 
-            pokemons.push(new Pokemon(i, name, codename, imageUrl, types, is_baby, is_legendary, is_mythical, officialArtworkUrl));
+            pokemons.push(new Pokemon(i, name, codename, imageUrl, types, is_baby, is_legendary, is_mythical, officialArtworkUrl, generation));
         } else {
             console.error(`Error fetching data for Pokémon ID ${i}: ${response.statusText}`);
         }

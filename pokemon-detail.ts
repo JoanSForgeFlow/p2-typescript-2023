@@ -20,6 +20,15 @@ interface DexDescription {
   flavor_text: string;
 }
 
+interface EvolutionStep {
+  id: number;
+  name: string;
+  imageUrl: string;
+  trigger: string;
+  triggerDetails: string;
+  evolvesTo: EvolutionStep[];
+}
+
 export class PokemonDetails {
     constructor(
       public id: number,
@@ -27,6 +36,9 @@ export class PokemonDetails {
       public codename: string,
       public imageUrl: string,
       public officialArtworkUrl: string,
+      public officialArtworkShinyUrl: string,
+      public animatedSpriteUrl: string,
+      public cryUrl: string,
       public height: number,
       public weight: number,
       public types: string[],
@@ -38,7 +50,16 @@ export class PokemonDetails {
       public superResistantTo: string[],
       public immuneTo: string[],
       public pokedexDescriptions: DexDescription[],
-      public stats: Stat[]
+      public stats: Stat[],
+      public genderRate: number,
+      public habitat: string,
+      public generation: string,
+      public evolutionChain: EvolutionStep[],
+      public genus: string,
+      public eggGroups: string[],
+      public captureRate: number,
+      public baseHappiness: number,
+      public growthRate: string
     ) {}
   }
 
@@ -50,6 +71,8 @@ export class PokemonDetails {
       const speciesData = await speciesResponse.json();
       const imageUrl = data.sprites.front_default;
       const officialArtworkUrl = data.sprites.other["official-artwork"].front_default;
+      const officialArtworkShinyUrl = data.sprites.other["official-artwork"].front_shiny || officialArtworkUrl;
+      const cryUrl = data.cries?.latest || '';
       const height = data.height;
       const weight = data.weight;
       const types = data.types.map((type: any) => type.type.name);
@@ -73,12 +96,30 @@ export class PokemonDetails {
       const codename = data.species.name;
       const nameEntry = speciesData.names.find((entry: { language: { name: string } }) => entry.language.name === 'en');
       const name = nameEntry ? nameEntry.name : codename.charAt(0).toUpperCase() + codename.slice(1);
+      
+      const genderRate = speciesData.gender_rate;
+      const habitat = speciesData.habitat?.name || 'unknown';
+      const generation = speciesData.generation?.name || 'unknown';
+      const evolutionChain = await getEvolutionChain(speciesData.evolution_chain?.url);
+      
+      // New fields
+      const animatedSpriteUrl = data.sprites.versions?.['generation-v']?.['black-white']?.animated?.front_default || '';
+      const genusEntry = speciesData.genera?.find((g: any) => g.language.name === 'en');
+      const genus = genusEntry ? genusEntry.genus : '';
+      const eggGroups = speciesData.egg_groups?.map((eg: any) => eg.name) || [];
+      const captureRate = speciesData.capture_rate || 0;
+      const baseHappiness = speciesData.base_happiness || 0;
+      const growthRate = speciesData.growth_rate?.name || 'unknown';
+      
       return new PokemonDetails(
         id,
         name,
         codename,
         imageUrl,
         officialArtworkUrl,
+        officialArtworkShinyUrl,
+        animatedSpriteUrl,
+        cryUrl,
         height,
         weight,
         types,
@@ -90,7 +131,16 @@ export class PokemonDetails {
         damageRelations.superResistantTo,
         damageRelations.immuneTo,
         pokedexDescriptions,
-        stats
+        stats,
+        genderRate,
+        habitat,
+        generation,
+        evolutionChain,
+        genus,
+        eggGroups,
+        captureRate,
+        baseHappiness,
+        growthRate
       );
     } catch (error) {
       console.error("Error fetching data from the PokeAPI:", error);
@@ -199,4 +249,65 @@ export class PokemonDetails {
       superResistantTo,
       immuneTo,
     };
+  }
+
+  async function getEvolutionChain(evolutionChainUrl: string | undefined): Promise<EvolutionStep[]> {
+    if (!evolutionChainUrl) return [];
+    
+    try {
+      const response = await fetch(evolutionChainUrl);
+      const data = await response.json();
+      
+      const processChain = async (chain: any): Promise<EvolutionStep> => {
+        const speciesName = chain.species.name;
+        const speciesUrl = chain.species.url;
+        const speciesId = parseInt(speciesUrl.split('/').filter(Boolean).pop());
+        
+        const pokemonResponse = await fetch(`https://pokeapi.co/api/v2/pokemon/${speciesId}`);
+        const pokemonData = await pokemonResponse.json();
+        const imageUrl = pokemonData.sprites.other["official-artwork"].front_default;
+        
+        let trigger = '';
+        let triggerDetails = '';
+        
+        if (chain.evolution_details && chain.evolution_details.length > 0) {
+          const details = chain.evolution_details[0];
+          trigger = details.trigger?.name || '';
+          
+          const detailParts: string[] = [];
+          if (details.min_level) detailParts.push(`Lv. ${details.min_level}`);
+          if (details.item) detailParts.push(`${details.item.name.replace(/-/g, ' ')}`);
+          if (details.held_item) detailParts.push(`Hold ${details.held_item.name.replace(/-/g, ' ')}`);
+          if (details.min_happiness) detailParts.push(`Happiness`);
+          if (details.min_affection) detailParts.push(`Affection`);
+          if (details.time_of_day) detailParts.push(`${details.time_of_day}`);
+          if (details.location) detailParts.push(`Special location`);
+          if (details.known_move) detailParts.push(`Know move`);
+          if (details.known_move_type) detailParts.push(`${details.known_move_type.name} move`);
+          if (details.trade_species) detailParts.push(`Trade`);
+          if (trigger === 'trade' && detailParts.length === 0) detailParts.push('Trade');
+          
+          triggerDetails = detailParts.join(' + ') || trigger.replace(/-/g, ' ');
+        }
+        
+        const evolvesTo: EvolutionStep[] = await Promise.all(
+          chain.evolves_to.map((evo: any) => processChain(evo))
+        );
+        
+        return {
+          id: speciesId,
+          name: speciesName.charAt(0).toUpperCase() + speciesName.slice(1),
+          imageUrl,
+          trigger,
+          triggerDetails,
+          evolvesTo
+        };
+      };
+      
+      const rootEvolution = await processChain(data.chain);
+      return [rootEvolution];
+    } catch (error) {
+      console.error("Error fetching evolution chain:", error);
+      return [];
+    }
   }
