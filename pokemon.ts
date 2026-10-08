@@ -57,9 +57,9 @@ export class Pokemon {
             const data = await cachedFetchJson(`https://pokeapi.co/api/v2/pokemon/${i}`);
             const speciesData = await cachedFetchJson(`https://pokeapi.co/api/v2/pokemon-species/${i}`);
 
-            // Priority: official artwork -> Dream World -> game sprite.
+            // Index card priority: game sprite -> official artwork -> Dream World.
             const officialArtworkUrl = data.sprites.other["official-artwork"].front_default;
-            const imageUrl = officialArtworkUrl || data.sprites.other["dream_world"]?.front_default || data.sprites.front_default;
+            const imageUrl = data.sprites.front_default || officialArtworkUrl || data.sprites.other["dream_world"]?.front_default;
             const types = data.types.map((type: any) => type.type.name);
             const is_baby = speciesData.is_baby;
             const is_legendary = speciesData.is_legendary;
@@ -101,9 +101,9 @@ export class Pokemon {
                   name: `${name} (${titleCase(suffix)})`,
                   suffix,
                   types: fd.types.map((t: any) => t.type.name),
-                  // Official artwork by default; the page's <head> error handler
-                  // falls back to the game sprite for forms that lack it.
-                  imageUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${vId}.png`,
+                  // Game sprite by default; forms without one use the official
+                  // artwork (the page's <head> error handler covers its failures).
+                  imageUrl: fd.sprites?.front_default || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${vId}.png`,
                   generation: (vg && vgToGen[vg]) || generation,
                   kind,
                 };
