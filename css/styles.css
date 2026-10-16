@@ -240,6 +240,20 @@
   clear: both;
 }
 
+.filter-legend {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.game-filter {
+  width: 100%;
+}
+
 .filter-group input {
   position: absolute;
   opacity: 0;
