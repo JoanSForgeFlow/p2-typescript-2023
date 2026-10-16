@@ -14,6 +14,7 @@ import { detailFile, dexNo } from "./shared/format";
 import type { Meta, PageData } from "./shared/model";
 import { renderPokemonIndex } from "./render/index-page";
 import { renderPokemonDetail } from "./render/detail-page";
+import { SITE_URL } from "./render/components";
 
 const TOTAL = 1025;
 
@@ -81,6 +82,15 @@ async function generateSite() {
     const details = await loadPokemonDetails(page.dex);
     if (details) await writeFile(detailFile(page.dex), renderPokemonDetail(details, page, meta, moves.table, TOTAL));
   });
+
+  const today = new Date().toISOString().slice(0, 10);
+  const paths = ['', ...Array.from(pages.keys()).sort((a, b) => a - b).map(detailFile)];
+  await writeFile("sitemap.xml", `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${paths.map(p => `  <url><loc>${SITE_URL}/${p}</loc><lastmod>${today}</lastmod></url>`).join('\n')}
+</urlset>
+`);
+  await writeFile("robots.txt", `User-agent: *\nAllow: /\n\nSitemap: ${SITE_URL}/sitemap.xml\n`);
 }
 
 export { generateSite };
