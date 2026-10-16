@@ -32,6 +32,47 @@ const BRAND = `${POKEBALL_LOGO}<span class="brand-name">PokeQuick<span>Dex</span
 
 const THEME_TOGGLE = `<button id="dark-mode-toggle" class="icon-btn theme-toggle" type="button" title="Toggle dark mode" aria-label="Toggle dark mode">${icon('moon', 'icon-moon')}${icon('sun', 'icon-sun')}</button>`;
 
+const PAYPAL_LOGO = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.067 8.478c.492.88.556 2.014.3 3.327-.74 3.806-3.276 5.12-6.514 5.12h-.5a.805.805 0 0 0-.794.68l-.04.22-.63 3.993-.032.17a.804.804 0 0 1-.794.679H7.72a.483.483 0 0 1-.477-.558L7.418 21h1.518l.95-6.02h1.385c4.678 0 7.75-2.203 8.796-6.502zm-2.96-5.09c.762.868.983 1.81.752 3.285-.019.123-.04.24-.062.36-.735 3.773-3.089 5.446-6.956 5.446H8.957c-.63 0-1.174.414-1.354 1.002l-.014-.002-.93 5.894H3.121a.051.051 0 0 1-.05-.06l2.598-16.51A.95.95 0 0 1 6.607 2h5.976c2.183 0 3.716.469 4.523 1.388z"/></svg>';
+
+const HEART = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+
+const DONATE_WIDGET = `
+      <div id="donate-widget" class="donate-widget">
+        <div id="donate-card" class="donate-card" role="dialog" aria-label="Support PokeQuickDex" hidden>
+          <button type="button" id="donate-close" class="donate-close" aria-label="Close">${icon('close')}</button>
+          <p class="donate-title">Enjoying PokeQuickDex?</p>
+          <p class="donate-subtitle">Support the project or send suggestions!</p>
+          <a href="https://paypal.me/joansis19" target="_blank" rel="noopener noreferrer" class="donate-paypal-btn">${PAYPAL_LOGO}Support with PayPal</a>
+        </div>
+        <button type="button" id="donate-fab" class="donate-fab" title="Support this project" aria-label="Support this project" aria-expanded="false" aria-controls="donate-card">${HEART}</button>
+      </div>
+      <script>
+        (function() {
+          const widget = document.getElementById("donate-widget");
+          const fab = document.getElementById("donate-fab");
+          const card = document.getElementById("donate-card");
+          function setOpen(open) {
+            card.hidden = !open;
+            fab.setAttribute("aria-expanded", String(open));
+            if (open) fab.classList.remove("pulse");
+          }
+          if (!sessionStorage.getItem("donateDismissed")) {
+            setTimeout(function() { fab.classList.add("pulse"); }, 3000);
+          }
+          fab.addEventListener("click", function() { setOpen(card.hidden); });
+          document.getElementById("donate-close").addEventListener("click", function() {
+            setOpen(false);
+            sessionStorage.setItem("donateDismissed", "true");
+          });
+          document.addEventListener("click", function(e) {
+            if (!widget.contains(e.target)) setOpen(false);
+          });
+          document.addEventListener("keydown", function(e) {
+            if (e.key === "Escape") setOpen(false);
+          });
+        })();
+      </script>`;
+
 const SITE_FOOTER = `
       <footer class="site-footer">
         <span>Data from <a href="https://pokeapi.co" target="_blank" rel="noopener">PokéAPI</a>.</span>
@@ -747,7 +788,7 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
             window.scrollTo(0, Number(savedScroll));
           }
         });
-      </script>
+      </script>${DONATE_WIDGET}
     </body>
   </html>`;
   }
@@ -1813,7 +1854,7 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
               }
             }
           });
-        </script>
+        </script>${DONATE_WIDGET}
       </body>
     </html>`;
   }  
