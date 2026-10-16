@@ -1,0 +1,141 @@
+// End-to-end checks against the generated site (run `bun run build` first).
+// Needs a local Chrome; set CHROME_PATH if it isn't /usr/bin/google-chrome.
+import puppeteer, { type Page } from "puppeteer-core";
+import type { AddressInfo } from "net";
+import { serve } from "../scripts/serve";
+
+const server = await serve(".", 0);
+const ROOT = `http://127.0.0.1:${(server.address() as AddressInfo).port}/`;
+const browser = await puppeteer.launch({
+  executablePath: process.env.CHROME_PATH || "/usr/bin/google-chrome",
+  headless: true,
+  args: ["--no-sandbox"],
+});
+
+let failures = 0;
+const pageErrors: string[] = [];
+const check = (name: string, ok: boolean, detail = "") => {
+  console.log(`${ok ? "ok  " : "FAIL"} ${name}${detail && !ok ? ` (${detail})` : ""}`);
+  if (!ok) failures++;
+};
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function open(path: string, width = 390): Promise<Page> {
+  const page = await browser.newPage();
+  page.on("pageerror", (e) => pageErrors.push(`${path}: ${(e as Error).message}`));
+  await page.setRequestInterception(true);
+  page.on("request", (r) => (/googlesyndication|_vercel/.test(r.url()) ? r.abort() : r.continue()));
+  await page.setViewport({ width, height: 844, isMobile: width < 800, hasTouch: width < 800 });
+  await page.goto(ROOT + path, { waitUntil: "networkidle2" });
+  return page;
+}
+
+const noSidewaysScroll = (page: Page) =>
+  page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth);
+
+const fitsScreen = (page: Page, selector: string) =>
+  page.$eval(selector, (el) => {
+    const r = el.getBoundingClientRect();
+    return r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight;
+  });
+
+// Layout: nothing may scroll sideways on phones, tablets or desktop.
+for (const width of [360, 390, 768, 1024, 1440]) {
+  const index = await open("index.html", width);
+  check(`index fits at ${width}px`, await noSidewaysScroll(index));
+  if (width < 1080) {
+    await index.click("#filters-open");
+    await wait(400);
+    check(`filters sheet fits at ${width}px`, await noSidewaysScroll(index));
+    await index.click("#filters-apply");
+    await wait(300);
+  }
+  await index.click("#compare-mode-btn");
+  const cards = await index.$$('.pokemon-grid li:not([style*="none"]) .pokemon-card');
+  await cards[5].click();
+  await cards[8].click();
+  check(`compare bar fits at ${width}px`, await fitsScreen(index, "#compare-bar"));
+  await index.close();
+  for (const dex of ["0006", "0133", "0479", "0890"]) {
+    const detail = await open(`${dex}_details.html`, width);
+    check(`#${dex} fits at ${width}px`, await noSidewaysScroll(detail));
+    const overflow = await detail.$eval(".evolution-chain", (el) => el.scrollWidth - el.clientWidth);
+    check(`#${dex} evolution fits at ${width}px`, overflow <= 1, `${overflow}px`);
+    await detail.close();
+  }
+}
+
+// Search and filters.
+const index = await open("index.html");
+const visibleNames = () => index.$$eval(".pokemon-grid li", (lis) =>
+  lis.filter((li) => li.style.display !== "none").map((li) => li.querySelector("h2")!.textContent));
+const search = async (text: string) => {
+  await index.$eval("#search-input", (el, t) => {
+    (el as HTMLInputElement).value = t;
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  }, text);
+  await wait(100);
+};
+await search("25");
+check("search by number", (await visibleNames()).join() === "Pikachu");
+await search("flabebe");
+check("search ignores accents", (await visibleNames()).includes("Flabébé"));
+await search("mr mime");
+check("search ignores punctuation", (await visibleNames()).includes("Mr. Mime"));
+await search("");
+await index.select("#game-filter", "firered-leafgreen");
+await wait(200);
+const count = parseInt(await index.$eval("#results-count", (e) => e.textContent || ""));
+check("game filter (FireRed & LeafGreen)", count >= 380 && count <= 390, String(count));
+await index.$eval('[data-clear="game"]', (e) => (e as HTMLElement).click());
+await wait(200);
+
+// Compare uses the generated data, not PokeAPI.
+await index.click("#compare-mode-btn");
+const cards = await index.$$('.pokemon-grid li:not([style*="none"]) .pokemon-card');
+await cards[5].click();
+await cards[8].click();
+await index.click("#compare-btn");
+await wait(800);
+check("compare", (await index.$$eval(".compare-pokemon h3", (h) => h.map((e) => e.textContent).join())) === "Charizard,Blastoise");
+await index.close();
+
+// Detail pages follow the selected game.
+const weak = (page: Page) => page.$$eval(".mu-weak .mu-chip", (cs) =>
+  cs.map((c) => c.firstChild!.textContent + c.querySelector(".mu-x")!.textContent).sort().join());
+let detail = await open("0006_details.html");
+check("default game", (await detail.$eval("#game-select", (s) => (s as HTMLSelectElement).value)) === "scarlet-violet");
+await detail.select("#game-select", "red-blue");
+await wait(300);
+check("Gen 1 type chart note", ((await detail.$eval("#era-note", (e) => e.textContent)) || "").includes("Gen 1"));
+check("Red & Blue TM numbers", (await detail.$$eval('.moves-panel[data-tab="machine"] tbody .mv-lv', (cs) => cs.map((c) => c.textContent)))
+  .every((t) => /^(TM|HM)\d+$/.test(t || "")));
+await detail.close();
+detail = await open("0035_details.html");
+check("Clefairy is Normal in Red & Blue", (await weak(detail)) === "fighting2×");
+await detail.evaluate(() => localStorage.removeItem("pokedexGame"));
+await detail.close();
+detail = await open("0052_details.html#galar");
+await wait(300);
+check("form from hash", (await detail.$eval("#pokemon-title-name", (e) => e.textContent)) === "Galarian Meowth");
+check("form matchups", (await weak(detail)) === "fighting2×,fire2×,ground2×");
+await detail.close();
+detail = await open("0006_details.html#mega-x");
+await wait(300);
+check("battle-only form", (await detail.$eval("#detail-training", (e) => (e as HTMLElement).hidden))
+  && (await detail.$eval('.evo-battle-step[data-form="mega-x"]', (e) => e.classList.contains("current"))));
+check("ability note (Levitate)", (await (await open("0479_details.html")).$eval("#ability-notes", (e) => e.textContent || "")).includes("Levitate"));
+
+// Installable app.
+const pwa = await open("index.html");
+await pwa.evaluate(() => navigator.serviceWorker.ready);
+await pwa.reload({ waitUntil: "networkidle2" });
+check("service worker active", await pwa.evaluate(() => !!navigator.serviceWorker.controller));
+const manifest = await (await fetch(ROOT + "manifest.webmanifest")).json();
+check("manifest icons exist", (await Promise.all(manifest.icons.map((i: any) => fetch(ROOT + i.src)))).every((r) => r.ok));
+
+check("no JavaScript errors", pageErrors.length === 0, pageErrors.join(" | "));
+await browser.close();
+server.close();
+console.log(failures ? `\n${failures} check(s) failed` : "\nAll checks passed");
+process.exit(failures ? 1 : 0);
