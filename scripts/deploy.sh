@@ -17,7 +17,7 @@ fi
 bun run build:client
 bun main.ts
 
-rsync -a index.html offline.html sitemap.xml robots.txt manifest.webmanifest sw.js "$TARGET/"
+rsync -a index.html offline.html sitemap.xml robots.txt manifest.webmanifest sw.js vercel.json "$TARGET/"
 rsync -a [0-9][0-9][0-9][0-9]_details.html "$TARGET/"
 rsync -a --delete css/ "$TARGET/css/"
 rsync -a --delete js/ "$TARGET/js/"
