@@ -1,4 +1,5 @@
-import { mkdir, writeFile } from "fs/promises";
+import { createHash } from "crypto";
+import { mkdir, readFile, writeFile } from "fs/promises";
 import { loadPokemons } from "./pokemon";
 import { loadPokemonDetails } from "./pokemon-detail"
 import { mapWithConcurrency } from "./concurrency";
@@ -14,9 +15,24 @@ import { detailFile, dexNo } from "./shared/format";
 import type { Meta, PageData } from "./shared/model";
 import { renderPokemonIndex } from "./render/index-page";
 import { renderPokemonDetail } from "./render/detail-page";
-import { SITE_URL } from "./render/components";
+import { SITE_URL, setAssetVersions } from "./render/components";
+import { renderOfflinePage } from "./render/offline-page";
 
 const TOTAL = 1025;
+
+const ASSETS = ["css/base.css", "css/styles.css", "css/pokemon_styles.css", "css/types.css", "js/index.js", "js/detail.js"];
+
+async function assetVersions(): Promise<Record<string, string>> {
+  const versions: Record<string, string> = {};
+  for (const path of ASSETS) {
+    try {
+      versions[path] = createHash("md5").update(await readFile(path)).digest("hex").slice(0, 10);
+    } catch (e) {
+      console.warn(`Missing ${path}; run "bun run build:client" first.`);
+    }
+  }
+  return versions;
+}
 
 async function generateSite() {
   // Region tokens, the type list, games and moves are fetched from the API up
@@ -72,12 +88,14 @@ async function generateSite() {
   };
   for (const page of pages.values()) page.defaultGame = bestGame(meta, page.varieties[0]).key;
 
+  setAssetVersions(await assetVersions());
   await mkdir("data/pokemon", { recursive: true });
   await writeFile("data/meta.json", JSON.stringify(meta));
   await writeFile("data/moves.json", JSON.stringify(moves.table));
   for (const page of pages.values()) await writeFile(`data/pokemon/${dexNo(page.dex)}.json`, JSON.stringify(page));
 
   await writeFile("index.html", renderPokemonIndex(pokemons, pages, meta, ALL_TYPES));
+  await writeFile("offline.html", renderOfflinePage());
   await mapWithConcurrency(Array.from(pages.values()), 10, async (page) => {
     const details = await loadPokemonDetails(page.dex);
     if (details) await writeFile(detailFile(page.dex), renderPokemonDetail(details, page, meta, moves.table, TOTAL));

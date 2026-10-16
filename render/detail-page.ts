@@ -9,7 +9,7 @@ import {
   statTotal, weightText,
 } from "../shared/sections";
 import { renderEvolution } from "./evolution";
-import { BRAND, DONATE_WIDGET, SITE_FOOTER, THEME_TOGGLE, pageHead } from "./components";
+import { BRAND, DONATE_WIDGET, SITE_FOOTER, THEME_TOGGLE, asset, pageHead } from "./components";
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 
@@ -70,7 +70,7 @@ export function renderPokemonDetail(details: PokemonDetails, page: PageData, met
             <div class="hero-types" id="pokemon-types">${typeTags(variety.types)}</div>
           </div>
           <div class="hero-art">
-            <img id="pokemon-artwork" src="${variety.art}" alt="${escapeHtml(page.name)}" />
+            <img id="pokemon-artwork" src="${variety.art}" alt="${escapeHtml(page.name)}" crossorigin="anonymous" />
           </div>
           <div class="hero-actions">${selectable.length > 1 ? `
             <div class="form-picker">
@@ -178,7 +178,7 @@ export function renderPokemonDetail(details: PokemonDetails, page: PageData, met
     </main>
     ${SITE_FOOTER}
     ${DONATE_WIDGET}
-    <script type="module" src="js/detail.js"></script>
+    <script type="module" src="${asset('js/detail.js')}"></script>
   </body>
 </html>`;
 }

@@ -5,6 +5,16 @@ export { icon };
 
 export const SITE_URL = 'https://pokequickdex.vercel.app';
 
+let assetVersions: Record<string, string> = {};
+
+// CSS/JS URLs carry a content hash so browsers and the service worker can
+// cache them forever and still pick up every deploy.
+export function setAssetVersions(versions: Record<string, string>): void {
+  assetVersions = versions;
+}
+
+export const asset = (path: string): string => (assetVersions[path] ? `${path}?v=${assetVersions[path]}` : path);
+
 export const POKEBALL_LOGO = `<svg class="brand-logo" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="#fff" stroke="#111827" stroke-width="2.5"/><path d="M2 16a14 14 0 0 1 28 0z" fill="#e3350d" stroke="#111827" stroke-width="2.5"/><circle cx="16" cy="16" r="4.5" fill="#fff" stroke="#111827" stroke-width="2.5"/></svg>`;
 
 export const BRAND = `${POKEBALL_LOGO}<span class="brand-name">PokeQuick<span>Dex</span></span>`;
@@ -65,12 +75,14 @@ export function pageHead(o: HeadOptions): string {
       <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
       <link rel="manifest" href="manifest.webmanifest">
       <meta name="theme-color" content="#e3350d">
+      <meta name="apple-mobile-web-app-capable" content="yes">
+      <meta name="apple-mobile-web-app-title" content="QuickDex">
       <link rel="preconnect" href="https://fonts.googleapis.com">
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-      <link rel="stylesheet" href="css/base.css">
-      <link rel="stylesheet" href="css/${o.stylesheet}">
-      <link rel="stylesheet" href="css/types.css">
+      <link rel="stylesheet" href="${asset('css/base.css')}">
+      <link rel="stylesheet" href="${asset(`css/${o.stylesheet}`)}">
+      <link rel="stylesheet" href="${asset('css/types.css')}">
       <script>
         try { if (localStorage.getItem("darkMode") === "true") document.documentElement.classList.add("dark-mode"); } catch (e) {}
         // On image error, retry the official artwork a few times (transient

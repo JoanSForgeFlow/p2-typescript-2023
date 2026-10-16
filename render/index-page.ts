@@ -2,7 +2,7 @@ import type { Pokemon } from "../pokemon";
 import type { Meta, PageData, Variety } from "../shared/model";
 import { detailFile, dexNo, searchKey, typeTags, typeVars } from "../shared/format";
 import { icon } from "../shared/icons";
-import { BRAND, DONATE_WIDGET, SITE_FOOTER, THEME_TOGGLE, pageHead } from "./components";
+import { BRAND, DONATE_WIDGET, SITE_FOOTER, THEME_TOGGLE, asset, pageHead } from "./components";
 
 const GENERATION_REGIONS: [string, string, string][] = [
   ['generation-i', 'I', 'Kanto'],
@@ -24,7 +24,7 @@ export function renderPokemonIndex(pokemons: Pokemon[], pages: Map<number, PageD
         <a class="pokemon-card${extraClass}" href="${href}" ${dataAttrs} style="${typeVars(cardTypes)}">
           <div class="card-art">
             <span class="pokemon-id">#${dex}</span>
-            <img src="${imageUrl}"${defaultImg ? ` data-default-img="${defaultImg}"` : ''} alt="" loading="lazy" decoding="async" width="96" height="96" />
+            <img src="${imageUrl}"${defaultImg ? ` data-default-img="${defaultImg}"` : ''} alt="" loading="lazy" decoding="async" crossorigin="anonymous" width="96" height="96" />
           </div>
           <div class="card-body">
             <h2>${name}</h2>
@@ -174,7 +174,7 @@ export function renderPokemonIndex(pokemons: Pokemon[], pages: Map<number, PageD
       </div>
       ${DONATE_WIDGET}
       <script type="application/json" id="index-data">${JSON.stringify(indexData)}</script>
-      <script type="module" src="js/index.js"></script>
+      <script type="module" src="${asset('js/index.js')}"></script>
     </body>
   </html>`;
 }

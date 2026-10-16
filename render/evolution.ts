@@ -19,7 +19,7 @@ export function renderEvolution(pokemon: PokemonDetails, page: PageData): Evolut
       return `
         <a href="${String(evo.id).padStart(4, '0')}_details.html${evo.hash ? `#${evo.hash}` : ''}" data-hash="${evo.hash || ''}" class="evo-step ${isCurrentSpecies && !evo.hash ? 'current' : ''}" ${isCurrentSpecies ? 'data-base="1"' : ''}>
           ${evo.hasForms ? `<span class="evo-forms-badge" title="Has other forms"${isCurrentSpecies ? ' style="display:none;"' : ''}>+</span>` : ''}
-          <img src="${evo.imageUrl}" data-default-img="${artworkUrl(evo.id)}" alt="${evo.name}" loading="lazy" />
+          <img src="${evo.imageUrl}" data-default-img="${artworkUrl(evo.id)}" alt="${evo.name}" loading="lazy" crossorigin="anonymous" />
           <span>${evo.name}</span>
         </a>`;
     };
@@ -28,7 +28,7 @@ export function renderEvolution(pokemon: PokemonDetails, page: PageData): Evolut
       formName.startsWith(pokemon.codename + '-') ? formName.slice(pokemon.codename.length + 1) : formName.split('-').slice(1).join('-');
     const evoBattleStep = (b: any): string => `
         <button type="button" class="evo-battle-step" data-form="${battleSuffix(b.formName)}">
-          <img src="${b.imageUrl}" alt="${b.name}" loading="lazy" />
+          <img src="${b.imageUrl}" alt="${b.name}" loading="lazy" crossorigin="anonymous" />
           <span>${b.name}</span>
         </button>`;
 
@@ -425,7 +425,7 @@ export function renderEvolution(pokemon: PokemonDetails, page: PageData): Evolut
                 const artwork = artworkUrl(Number(formId));
                 const label = formLabel(v);
                 return `<button type="button" class="form-step ${v.is_default ? 'active' : ''}" data-variety="${v.name}" data-region="${evoSuffixOf(v.name)}">
-                  <img src="${artwork}" data-default-img="${pokemon.officialArtworkUrl}" alt="${label}" loading="lazy" />
+                  <img src="${artwork}" data-default-img="${pokemon.officialArtworkUrl}" alt="${label}" loading="lazy" crossorigin="anonymous" />
                   <span>${label}</span>
                 </button>`;
               }).join('')}

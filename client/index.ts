@@ -294,7 +294,7 @@ function initCompare(): void {
 
   const side = (page: PageData, v: Variety, n: number) => `
     <div class="compare-pokemon" id="compare-side-${n}" style="--tc: var(--type-${v.types[0]})">
-      <div class="compare-art"><img id="compare-img-${n}" src="${v.art}" alt=""></div>
+      <div class="compare-art"><img id="compare-img-${n}" src="${v.art}" alt="" crossorigin="anonymous"></div>
       <h3 id="compare-name-${n}">${escapeHtml(v.label)}</h3>
       <div class="compare-types" id="compare-types-${n}">${typeTags(v.types)}</div>
       ${page.varieties.length > 1 ? `<div class="select-wrap"><select id="compare-form-${n}" aria-label="Form">${page.varieties.map(o => `<option value="${o.name}"${o.name === v.name ? " selected" : ""}>${escapeHtml(o.label)}</option>`).join("")}</select></div>` : ""}

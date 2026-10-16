@@ -70,4 +70,9 @@ export function initDonateWidget(): void {
 export function initCommon(): void {
   initThemeToggle();
   initDonateWidget();
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => { /* works without offline support */ });
+    });
+  }
 }
