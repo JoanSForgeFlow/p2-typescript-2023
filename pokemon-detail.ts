@@ -1,5 +1,7 @@
 import { cachedFetchJson } from "./fetch-cache";
 import { regionOf, ensureRegionsLoaded } from "./regions";
+import type { Lang } from "./shared/i18n";
+import { localName, resourceName, spanishVarietyLabels } from "./lib/localize";
 
 interface DamageRelation {
   double_damage_from: { name: string }[];
@@ -21,6 +23,7 @@ interface Stat {
 interface DexDescription {
   version: string;
   flavor_text: string;
+  lang?: string;
 }
 
 // The evolution chain is a raw tree annotated per region, so the page can render a
@@ -116,7 +119,7 @@ export class PokemonDetails {
     ) {}
   }
 
-  export const loadPokemonDetails = async (id: number): Promise<PokemonDetails | undefined> => {
+  export const loadPokemonDetails = async (id: number, lang: Lang = 'en'): Promise<PokemonDetails | undefined> => {
     try {
       const data = await cachedFetchJson(`https://pokeapi.co/api/v2/pokemon/${id}`);
       const speciesData = await cachedFetchJson(`https://pokeapi.co/api/v2/pokemon-species/${id}`);
@@ -146,19 +149,18 @@ export class PokemonDetails {
         };
       });
       const damageRelations = await getPokemonDamageRelations(id);
-      const pokedexDescriptions = await getPokemonDescriptions(id);
+      const pokedexDescriptions = await getPokemonDescriptions(id, lang);
       const codename = data.species.name;
-      const nameEntry = speciesData.names.find((entry: { language: { name: string } }) => entry.language.name === 'en');
-      const name = nameEntry ? nameEntry.name : codename.charAt(0).toUpperCase() + codename.slice(1);
+      const name = localName(speciesData.names, lang) || codename.charAt(0).toUpperCase() + codename.slice(1);
       
       const genderRate = speciesData.gender_rate;
       const habitat = speciesData.habitat?.name || 'unknown';
       const generation = speciesData.generation?.name || 'unknown';
-      const evolutionChain = await getEvolutionChain(speciesData.evolution_chain?.url);
+      const evolutionChain = await getEvolutionChain(speciesData.evolution_chain?.url, lang);
       
       // New fields
       const animatedSpriteUrl = data.sprites.versions?.['generation-v']?.['black-white']?.animated?.front_default || '';
-      const genusEntry = speciesData.genera?.find((g: any) => g.language.name === 'en');
+      const genusEntry = speciesData.genera?.find((g: any) => g.language.name === lang) || speciesData.genera?.find((g: any) => g.language.name === 'en');
       const genus = genusEntry ? genusEntry.genus : '';
       const eggGroups = speciesData.egg_groups?.map((eg: any) => eg.name) || [];
       const captureRate = speciesData.capture_rate || 0;
@@ -223,12 +225,17 @@ export class PokemonDetails {
     return descriptions;
   }
 
-  async function getPokemonDescriptions(pokemonId: number): Promise<DexDescription[]> {
+  // Pokédex text in the page's language; PokeAPI only has Spanish from X & Y
+  // on, so a species without any falls back to English (marked as such).
+  async function getPokemonDescriptions(pokemonId: number, lang: Lang): Promise<DexDescription[]> {
     const data = await cachedFetchJson(`https://pokeapi.co/api/v2/pokemon-species/${pokemonId}`);
-    const englishFlavorTextEntries = data.flavor_text_entries.filter((entry: { language: { name: string } }) => entry.language.name === 'en');
-    if (englishFlavorTextEntries.length > 0) {
-      const pokedexDescriptions: DexDescription[] = englishFlavorTextEntries.map((entry: { flavor_text: string; version: { name: string } }) => {
-        return { 'version': entry.version.name, 'flavor_text': cleanText(entry.flavor_text) };
+    const inLanguage = (code: string) => data.flavor_text_entries.filter((entry: { language: { name: string } }) => entry.language.name === code);
+    const own = inLanguage(lang);
+    const entries = own.length ? own : inLanguage('en');
+    const fallback = own.length ? {} : { lang: 'en' };
+    if (entries.length > 0) {
+      const pokedexDescriptions: DexDescription[] = entries.map((entry: { flavor_text: string; version: { name: string } }) => {
+        return { 'version': entry.version.name, 'flavor_text': cleanText(entry.flavor_text), ...fallback };
       });
       return pokedexDescriptions;
     } else {
@@ -307,9 +314,102 @@ export class PokemonDetails {
     };
   }
 
-  async function getEvolutionChain(evolutionChainUrl: string | undefined): Promise<EvoNode | null> {
+  // Words for evolution and transformation conditions. Item, move, type,
+  // species and nature names come from PokeAPI in the page's language.
+  const EVO_WORDS_EN = {
+    level: (n: number) => `Lv. ${n}`,
+    hold: (item: string) => `Hold ${item}`,
+    happiness: 'Happiness',
+    affection: 'Affection',
+    beauty: 'Beauty',
+    location: 'Special location',
+    rock: 'Near special rock',
+    rain: 'During rain',
+    upsideDown: 'Turn upside down',
+    multiplayer: 'With another player',
+    knows: (move: string) => `Knows ${move}`,
+    moveType: (type: string) => `${type} move`,
+    useMove: (move: string, times: number) => `Use ${move}${times ? ` ${times} times` : ''}`,
+    recoil: (hp: number) => `Recoil damage (${hp} HP)`,
+    steps: (n: number) => `Walk ${n} steps`,
+    attackOver: 'Attack > Defense',
+    attackUnder: 'Attack < Defense',
+    attackEqual: 'Attack = Defense',
+    party: (species: string) => `With ${species} in party`,
+    partyType: (type: string) => `With ${type}-type in party`,
+    female: 'Female',
+    male: 'Male',
+    tradeFor: (species: string) => `Trade for ${species}`,
+    trade: 'Trade',
+    time: {} as Record<string, string>,
+    holding: (method: string, kind: string) => `${method} holding a ${kind}`,
+    varies: (factors: string) => `form varies${factors ? ` by ${factors}` : ''}`,
+    timeOfDay: 'time of day',
+    factor: (kind: string) => kind,
+    variables: {} as Record<string, string>,
+    and: ' and ',
+    triggers: {} as Record<string, string>,
+    battle: {} as Record<string, string>,
+  };
+
+  const EVO_WORDS_ES: typeof EVO_WORDS_EN = {
+    level: (n) => `Nv. ${n}`,
+    hold: (item) => `Equipado con ${item}`,
+    happiness: 'Amistad',
+    affection: 'Afecto',
+    beauty: 'Belleza',
+    location: 'Lugar especial',
+    rock: 'Cerca de una roca especial',
+    rain: 'Con lluvia',
+    upsideDown: 'Con la consola boca abajo',
+    multiplayer: 'Con otro jugador',
+    knows: (move) => `Conoce ${move}`,
+    moveType: (type) => `Movimiento de tipo ${type}`,
+    useMove: (move, times) => `Usar ${move}${times ? ` ${times} veces` : ''}`,
+    recoil: (hp) => `Daño por retroceso (${hp} PS)`,
+    steps: (n) => `Caminar ${n} pasos`,
+    attackOver: 'Ataque > Defensa',
+    attackUnder: 'Ataque < Defensa',
+    attackEqual: 'Ataque = Defensa',
+    party: (species) => `Con ${species} en el equipo`,
+    partyType: (type) => `Con un Pokémon de tipo ${type} en el equipo`,
+    female: 'Hembra',
+    male: 'Macho',
+    tradeFor: (species) => `Intercambio por ${species}`,
+    trade: 'Intercambio',
+    time: { day: 'de día', night: 'de noche', dusk: 'al anochecer' },
+    holding: (method, kind) => `${method} equipado con un ${kind}`,
+    varies: (factors) => `la forma varía${factors ? ` según ${factors}` : ''}`,
+    timeOfDay: 'la hora del día',
+    factor: (kind) => `el ${kind}`,
+    variables: { spin: 'el giro' },
+    and: ' y ',
+    triggers: {
+      'level-up': 'Subir de nivel',
+      'use-item': 'Usar objeto',
+      shed: 'Muda (con hueco en el equipo y una Poké Ball)',
+      spin: 'Girar',
+      'tower-of-darkness': 'Entrenar en la Torre de la Oscuridad',
+      'tower-of-waters': 'Entrenar en la Torre del Agua',
+      'three-critical-hits': 'Asestar tres golpes críticos en un combate',
+      'take-damage': 'Ir a un lugar concreto tras recibir daño',
+      'in-battle-level-up': 'Subir de nivel en combate',
+      'agile-style-move': 'Usar un movimiento con estilo rápido',
+      'strong-style-move': 'Usar un movimiento con estilo fuerte',
+      'recoil-damage': 'Recibir daño por retroceso',
+      'use-move': 'Usar un movimiento',
+      'three-defeated-bisharp': 'Derrotar a tres Bisharp con Distintivo de Líder',
+      'gimmighoul-coins': 'Reunir 999 monedas de Gimmighoul',
+      'meltan-candies': 'Dar 400 caramelos de Meltan en Pokémon GO',
+      other: 'Otro',
+    },
+    battle: { 'gigantamax-factor': 'Factor Gigamax' },
+  };
+
+  async function getEvolutionChain(evolutionChainUrl: string | undefined, lang: Lang): Promise<EvoNode | null> {
     if (!evolutionChainUrl) return null;
     await ensureRegionsLoaded();
+    const words = lang === 'es' ? EVO_WORDS_ES : EVO_WORDS_EN;
 
     try {
       const data = await cachedFetchJson(evolutionChainUrl);
@@ -320,53 +420,57 @@ export class PokemonDetails {
 
       const titleCase = (s: string): string =>
         s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      const nameOf = (ref: any): Promise<string> => resourceName(ref?.url, lang, ref?.name || '');
+      const triggerName = async (trigger: any): Promise<string> =>
+        (lang === 'es' && words.triggers[trigger?.name || '']) || (trigger ? resourceName(trigger.url, 'en', trigger.name) : '');
       // The condition to trigger a battle-only transformation (mega stone, Gigantamax
       // Factor, an ability…), shown under the "↔". Deduped (a form may repeat a trigger);
       // the "--held"/"--bag" suffix on Z-crystal item names is dropped for display.
-      const buildBattleTrigger = (conditions: any[]): string =>
+      const buildBattleTrigger = async (conditions: any[]): Promise<string> =>
         Array.from(new Set(
-          (conditions || [])
-            .map((c: any) => titleCase((c.name || c.trigger || '').replace(/--(held|bag)$/, '')))
+          (await Promise.all((conditions || []).map((c: any) => c.url
+            ? resourceName(c.url, lang, (c.name || '').replace(/--(held|bag)$/, ''))
+            : words.battle[c.trigger] || titleCase(c.name || c.trigger || ''))))
             .filter(Boolean)
         )).join(' + ');
 
-      const buildTriggerDetails = (detail: any): string => {
+      const buildTriggerDetails = async (detail: any): Promise<string> => {
         const trigger = detail.trigger?.name || '';
         const detailParts: string[] = [];
-        if (detail.min_level) detailParts.push(`Lv. ${detail.min_level}`);
-        if (detail.item) detailParts.push(`${detail.item.name.replace(/-/g, ' ')}`);
-        if (detail.held_item) detailParts.push(`Hold ${detail.held_item.name.replace(/-/g, ' ')}`);
-        if (detail.min_happiness) detailParts.push(`Happiness`);
-        if (detail.min_affection) detailParts.push(`Affection`);
-        if (detail.min_beauty) detailParts.push(`Beauty`);
-        if (detail.time_of_day) detailParts.push(`${detail.time_of_day}`);
-        if (detail.location) detailParts.push(`Special location`);
-        if (detail.near_special_rock) detailParts.push(`Near special rock`);
-        if (detail.needs_overworld_rain) detailParts.push(`During rain`);
-        if (detail.turn_upside_down) detailParts.push(`Turn upside down`);
-        if (detail.needs_multiplayer) detailParts.push(`With another player`);
-        if (detail.known_move) detailParts.push(`Know move`);
-        if (detail.known_move_type) detailParts.push(`${detail.known_move_type.name} move`);
-        if (detail.used_move) detailParts.push(`Use ${titleCase(detail.used_move.name)}${detail.min_move_count ? ' ' + detail.min_move_count + ' times' : ''}`);
-        if (detail.min_damage_taken) detailParts.push(`Recoil damage (${detail.min_damage_taken} HP)`);
-        if (detail.min_steps) detailParts.push(`Walk ${detail.min_steps} steps`);
+        if (detail.min_level) detailParts.push(words.level(detail.min_level));
+        if (detail.item) detailParts.push(await nameOf(detail.item));
+        if (detail.held_item) detailParts.push(words.hold(await nameOf(detail.held_item)));
+        if (detail.min_happiness) detailParts.push(words.happiness);
+        if (detail.min_affection) detailParts.push(words.affection);
+        if (detail.min_beauty) detailParts.push(words.beauty);
+        if (detail.time_of_day) detailParts.push(words.time[detail.time_of_day] || titleCase(detail.time_of_day));
+        if (detail.location) detailParts.push(words.location);
+        if (detail.near_special_rock) detailParts.push(words.rock);
+        if (detail.needs_overworld_rain) detailParts.push(words.rain);
+        if (detail.turn_upside_down) detailParts.push(words.upsideDown);
+        if (detail.needs_multiplayer) detailParts.push(words.multiplayer);
+        if (detail.known_move) detailParts.push(words.knows(await nameOf(detail.known_move)));
+        if (detail.known_move_type) detailParts.push(words.moveType(await nameOf(detail.known_move_type)));
+        if (detail.used_move) detailParts.push(words.useMove(await nameOf(detail.used_move), detail.min_move_count || 0));
+        if (detail.min_damage_taken) detailParts.push(words.recoil(detail.min_damage_taken));
+        if (detail.min_steps) detailParts.push(words.steps(detail.min_steps));
         // Tyrogue → Hitmonlee (Atk>Def) / Hitmonchan (Atk<Def) / Hitmontop (Atk=Def).
-        if (detail.relative_physical_stats === 1) detailParts.push('Attack > Defense');
-        else if (detail.relative_physical_stats === -1) detailParts.push('Attack < Defense');
-        else if (detail.relative_physical_stats === 0) detailParts.push('Attack = Defense');
-        if (detail.party_species) detailParts.push(`With ${titleCase(detail.party_species.name)} in party`);
-        if (detail.party_type) detailParts.push(`With ${titleCase(detail.party_type.name)}-type in party`);
+        if (detail.relative_physical_stats === 1) detailParts.push(words.attackOver);
+        else if (detail.relative_physical_stats === -1) detailParts.push(words.attackUnder);
+        else if (detail.relative_physical_stats === 0) detailParts.push(words.attackEqual);
+        if (detail.party_species) detailParts.push(words.party(await nameOf(detail.party_species)));
+        if (detail.party_type) detailParts.push(words.partyType(await nameOf(detail.party_type)));
         // Some evolutions are gender-locked (Combee → Vespiquen ♀, Kirlia → Gallade ♂).
-        if (detail.gender === 1) detailParts.push('Female');
-        else if (detail.gender === 2) detailParts.push('Male');
-        if (detail.trade_species) detailParts.push(`Trade for ${titleCase(detail.trade_species.name)}`);
-        else if (trigger === 'trade' && detailParts.length === 0) detailParts.push('Trade');
-        let text = detailParts.join(' + ') || trigger.replace(/-/g, ' ');
+        if (detail.gender === 1) detailParts.push(words.female);
+        else if (detail.gender === 2) detailParts.push(words.male);
+        if (detail.trade_species) detailParts.push(words.tradeFor(await nameOf(detail.trade_species)));
+        else if (trigger === 'trade' && detailParts.length === 0) detailParts.push(words.trade);
+        let text = detailParts.join(' + ') || await triggerName(detail.trigger);
         // Nature-gated evolutions (Toxel → Amped/Low-Key Toxtricity): list the
         // qualifying natures below the trigger; skipped when all 25 qualify.
         const natures = detail.allowed_natures || [];
         if (natures.length && natures.length < 25) {
-          const names = natures.map((n: any) => n.name.charAt(0).toUpperCase() + n.name.slice(1)).join(', ');
+          const names = (await Promise.all(natures.map(nameOf))).join(', ');
           text += `<br>(${names})`;
         }
         return text;
@@ -375,24 +479,25 @@ export class PokemonDetails {
       // Used when the evolved form collapses into a set of forms (Alcremie's per-Sweet
       // forms): name the method and which factors pick the form, not their values. Read
       // from the data (item, time, condition variables), so it needs no per-Pokémon knowledge.
-      const buildGenericTrigger = (detail: any): string => {
-        const method = titleCase(detail.trigger?.name || 'level-up');
+      const buildGenericTrigger = async (detail: any): Promise<string> => {
+        const method = await triggerName(detail.trigger || { name: 'level-up', url: 'https://pokeapi.co/api/v2/evolution-trigger/1/' });
         const factors: string[] = [];
         let prefix = method;
         if (detail.held_item) {
-          const kind = titleCase(detail.held_item.name.split('-').pop());
-          prefix += ` holding a ${kind}`;
-          factors.push(kind);
+          const kind = lang === 'es'
+            ? (await nameOf(detail.held_item)).split(' ')[0]
+            : titleCase(detail.held_item.name.split('-').pop());
+          prefix = words.holding(method, kind);
+          factors.push(words.factor(kind));
         }
-        if (detail.time_of_day) factors.push('time of day');
+        if (detail.time_of_day) factors.push(words.timeOfDay);
         for (const v of detail.condition_expression?.variables || []) {
           const w = v.name.split('-')[0];   // e.g. "spin-direction" -> "spin"
-          if (!factors.includes(w)) factors.push(w);
+          const factor = words.variables[w] || w;
+          if (!factors.includes(factor)) factors.push(factor);
         }
-        const varies = factors.length
-          ? ' by ' + factors.slice(0, -1).join(', ') + (factors.length > 1 ? ' and ' : '') + factors[factors.length - 1]
-          : '';
-        return `${prefix}<br>(form varies${varies})`;
+        const list = factors.length > 1 ? factors.slice(0, -1).join(', ') + words.and + factors[factors.length - 1] : factors[0] || '';
+        return `${prefix}<br>(${words.varies(list)})`;
       };
 
       const processChain = async (chain: any): Promise<EvoNode> => {
@@ -403,7 +508,8 @@ export class PokemonDetails {
         const speciesData = await cachedFetchJson(speciesUrl);
         const varieties = speciesData.varieties || [];
 
-        const capName = codename.charAt(0).toUpperCase() + codename.slice(1);
+        const capName = localName(speciesData.names, lang) || codename.charAt(0).toUpperCase() + codename.slice(1);
+        const spanishLabels = lang === 'es' ? await spanishVarietyLabels(speciesId) : null;
         const defaultVar = varieties.find((v: any) => v.is_default) || { pokemon: { name: codename, url: speciesUrl } };
         const defaultName = defaultVar.pokemon.name;
         const allFormNames: string[] = varieties.map((v: any) => v.pokemon.name);
@@ -417,6 +523,7 @@ export class PokemonDetails {
           (fd?.names || []).find((n: any) => n.language?.name === 'en')?.name;
         const labelFor = (name: string, fd?: any): string => {
           if (name === defaultName) return capName;
+          if (spanishLabels) return spanishLabels.get(name) || capName;
           const suffix = suffixOf(name);
           const region = regionOf(name);
           // Pure regional forms (suffix is exactly the region token) use the
@@ -459,7 +566,7 @@ export class PokemonDetails {
         for (const { v, fd } of formInfos) {
           if (!fd || fd.is_battle_only) continue;  // battle-only handled below
           const conds = fd.trigger_conditions || [];
-          const trigger = buildBattleTrigger(conds);
+          const trigger = await buildBattleTrigger(conds);
           for (const c of conds) {
             const b = c.base_form?.name;
             if (b && varietyNames.has(b) && b !== v.pokemon.name) {
@@ -495,22 +602,22 @@ export class PokemonDetails {
           battleForms.push({
             id: vId,
             formName: v.pokemon.name,
-            name: `${titleCase(formName)} ${capName}`,
+            name: spanishLabels?.get(v.pokemon.name) || `${titleCase(formName)} ${capName}`,
             imageUrl: artwork(vId),
-            trigger: buildBattleTrigger(conditions),
+            trigger: await buildBattleTrigger(conditions),
             baseForms,
           });
         }
 
         const children: EvoEdge[] = await Promise.all(
           chain.evolves_to.map(async (evo: any): Promise<EvoEdge> => {
-            const paths: EvoPath[] = (evo.evolution_details || []).map((detail: any) => ({
+            const paths: EvoPath[] = await Promise.all((evo.evolution_details || []).map(async (detail: any) => ({
               baseForm: detail.required_pokemon_form?.name || null,
               evolvedForm: detail.evolved_pokemon_form?.name || null,
-              trigger: buildTriggerDetails(detail),
-              genericTrigger: buildGenericTrigger(detail),
+              trigger: await buildTriggerDetails(detail),
+              genericTrigger: await buildGenericTrigger(detail),
               vg: detail.version_group ? idFromUrl(detail.version_group.url) : 0,
-            }));
+            })));
             if (paths.length === 0) paths.push({ baseForm: null, evolvedForm: null, trigger: '', genericTrigger: '', vg: 0 });
             return { node: await processChain(evo), paths };
           })

@@ -1,4 +1,5 @@
 import type { Meta, TypeChart, Variety } from './model';
+import { t } from './i18n';
 
 export function chartFor(meta: Meta, gen: number): TypeChart {
   return meta.charts.find(c => gen <= c.upToGen) || meta.charts[meta.charts.length - 1];
@@ -65,5 +66,5 @@ export function eraLabel(meta: Meta, gen: number): string | null {
   if (chart === latest) return null;
   const index = meta.charts.indexOf(chart);
   const from = index === 0 ? 1 : meta.charts[index - 1].upToGen + 1;
-  return from === chart.upToGen ? `Gen ${from}` : `Gen ${from}–${chart.upToGen}`;
+  return from === chart.upToGen ? t('era.gen', { n: from }) : t('era.gens', { from, to: chart.upToGen });
 }

@@ -1,5 +1,7 @@
 import { cachedFetchJson } from "../fetch-cache";
 import type { Game } from "../shared/model";
+import { joinNames, type Lang } from "../shared/i18n";
+import { localName } from "./localize";
 
 export interface VersionGroupInfo {
   name: string;
@@ -18,6 +20,7 @@ export interface GameCatalog {
   games: GameSource[];
   versionGroups: Map<string, VersionGroupInfo>;
   versionLabels: Map<string, string>;
+  versionNames: Map<string, any[]>;
   versionOrder: Map<string, number>;
   gameOfVersionGroup: Map<string, string>;
 }
@@ -27,12 +30,17 @@ const ROMAN: Record<string, number> = { i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6,
 export const genNumber = (generationName: string): number => ROMAN[generationName.replace('generation-', '')] || 0;
 
 // Some games bundle long version names; keep the selector readable.
-const LABEL_OVERRIDES: Record<string, string> = {
-  'lets-go-pikachu-lets-go-eevee': "Let's Go Pikachu & Eevee",
+const LABEL_OVERRIDES: Record<Lang, Record<string, string>> = {
+  en: { 'lets-go-pikachu-lets-go-eevee': "Let's Go Pikachu & Eevee" },
+  es: { 'lets-go-pikachu-lets-go-eevee': "Let's Go Pikachu y Eevee" },
 };
 
-const englishName = (data: any, fallback: string): string =>
-  (data.names || []).find((n: any) => n.language.name === 'en')?.name || fallback;
+export const versionLabel = (catalog: GameCatalog, version: string, lang: Lang): string =>
+  localName(catalog.versionNames.get(version), lang) || version;
+
+export const gameLabel = (catalog: GameCatalog, game: GameSource, lang: Lang): string =>
+  LABEL_OVERRIDES[lang][game.key]
+  || joinNames((catalog.versionGroups.get(game.key)?.versions || []).map(v => versionLabel(catalog, v, lang)), lang);
 
 let catalogPromise: Promise<GameCatalog> | null = null;
 
@@ -56,10 +64,12 @@ async function buildCatalog(): Promise<GameCatalog> {
   groups.sort((a, b) => a.order - b.order);
 
   const versionLabels = new Map<string, string>();
+  const versionNames = new Map<string, any[]>();
   const versionOrder = new Map<string, number>();
   await Promise.all(groups.flatMap(g => g.versions.map(async (v) => {
     const data = await cachedFetchJson(`https://pokeapi.co/api/v2/version/${v}/`);
-    versionLabels.set(v, englishName(data, v));
+    versionLabels.set(v, localName(data.names, 'en') || v);
+    versionNames.set(v, data.names || []);
     versionOrder.set(v, g.order);
   })));
 
@@ -85,7 +95,7 @@ async function buildCatalog(): Promise<GameCatalog> {
     for (const m of members) gameOfVersionGroup.set(m.name, g.name);
     games.push({
       key: g.name,
-      label: LABEL_OVERRIDES[g.name] || g.versions.map(v => versionLabels.get(v) || v).join(' & '),
+      label: LABEL_OVERRIDES.en[g.name] || g.versions.map(v => versionLabels.get(v) || v).join(' & '),
       gen: g.gen,
       order: g.order,
       versions: members.flatMap(m => m.versions.map(v => ({ key: v, label: versionLabels.get(v) || v }))),
@@ -101,6 +111,7 @@ async function buildCatalog(): Promise<GameCatalog> {
     games,
     versionGroups: new Map(groups.map(g => [g.name, g])),
     versionLabels,
+    versionNames,
     versionOrder,
     gameOfVersionGroup,
   };

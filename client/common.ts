@@ -1,6 +1,11 @@
 import type { Meta, MoveTable, PageData } from "../shared/model";
+import { rootPath, setLang, setTypeLabels } from "../shared/i18n";
 
 export const $ = <T extends HTMLElement = HTMLElement>(id: string): T => document.getElementById(id) as T;
+
+// Each language has its own pages (es/ for Spanish) and data next to them,
+// so "data/..." URLs stay relative to the page.
+setLang(document.documentElement.lang === "es" ? "es" : "en");
 
 const GAME_KEY = "pokedexGame";
 
@@ -30,7 +35,10 @@ function getJson<T>(url: string): Promise<T> {
   return cache.get(url)!;
 }
 
-export const loadMeta = () => getJson<Meta>("data/meta.json");
+export const loadMeta = () => getJson<Meta>("data/meta.json").then((meta) => {
+  setTypeLabels(meta.typeLabels);
+  return meta;
+});
 export const loadMoves = () => getJson<MoveTable>("data/moves.json");
 export const loadPage = (dex: number) => getJson<PageData>(`data/pokemon/${String(dex).padStart(4, "0")}.json`);
 
@@ -67,12 +75,23 @@ export function initDonateWidget(): void {
   });
 }
 
+// The language link keeps the form being viewed (#galar…).
+function initLanguageSwitch(): void {
+  const link = document.getElementById("lang-switch");
+  if (!link) return;
+  const base = (link.getAttribute("href") || "").split("#")[0];
+  const update = () => link.setAttribute("href", base + location.hash);
+  update();
+  window.addEventListener("hashchange", update);
+}
+
 export function initCommon(): void {
   initThemeToggle();
   initDonateWidget();
+  initLanguageSwitch();
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("sw.js").catch(() => { /* works without offline support */ });
+      navigator.serviceWorker.register(`${rootPath()}sw.js`).catch(() => { /* works without offline support */ });
     });
   }
 }

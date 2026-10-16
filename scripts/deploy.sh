@@ -23,7 +23,8 @@ rsync -a --delete css/ "$TARGET/css/"
 rsync -a --delete js/ "$TARGET/js/"
 rsync -a --delete icons/ "$TARGET/icons/"
 rsync -a --delete data/ "$TARGET/data/"
+rsync -a --delete es/ "$TARGET/es/"
 
 echo
 echo "Copied to $TARGET:"
-git -C "$TARGET" status --short | awk '{print $2}' | sed -E 's#^[0-9]{4}_details\.html$#*_details.html#; s#^data/pokemon/.*#data/pokemon/*.json#' | sort | uniq -c
+git -C "$TARGET" status --short | awk '{print $2}' | sed -E 's#^(es/)?[0-9]{4}_details\.html$#\1*_details.html#; s#^(es/)?data/pokemon/.*#\1data/pokemon/*.json#' | sort | uniq -c

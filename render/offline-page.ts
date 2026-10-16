@@ -1,15 +1,17 @@
-import { BRAND, asset, pageHead } from "./components";
+import { getLang, t } from "../shared/i18n";
+import { BRAND, pageHead } from "./components";
 
 export function renderOfflinePage(): string {
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${getLang()}">
   ${pageHead({
-    title: 'Offline · PokeQuickDex',
-    description: 'You are offline.',
+    title: t('offline.metaTitle'),
+    description: t('offline.metaDescription'),
     path: 'offline.html',
     image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png',
     stylesheet: 'styles.css',
     extra: '\n      <meta name="robots" content="noindex">',
+    alternates: false,
   })}
   <body>
     <header class="topbar">
@@ -19,9 +21,9 @@ export function renderOfflinePage(): string {
     </header>
     <main class="index offline-page">
       <section class="empty-state">
-        <h2>You're offline</h2>
-        <p>Pokémon you've already opened are still available. Connect to the internet to see new ones.</p>
-        <a class="btn btn-primary" href="index.html">Go to the Pokédex</a>
+        <h2>${t('offline.title')}</h2>
+        <p>${t('offline.text')}</p>
+        <a class="btn btn-primary" href="index.html">${t('offline.button')}</a>
       </section>
     </main>
   </body>

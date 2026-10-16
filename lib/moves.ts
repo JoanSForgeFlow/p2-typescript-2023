@@ -2,12 +2,14 @@ import { cachedFetchJson } from "../fetch-cache";
 import { mapWithConcurrency } from "../concurrency";
 import { DAMAGE_CLASSES, type MoveRow, type MoveTable, type PastMoveValue } from "../shared/model";
 import type { GameCatalog } from "./games";
+import { localName } from "./localize";
 
 const idFromUrl = (url: string): number => parseInt(url.split('/').filter(Boolean).pop() as string);
 
 export interface MoveIndex {
   table: MoveTable;
   indexOf: Map<string, number>;
+  spanishNames: string[];
 }
 
 // One row per move, referenced by index from every learnset. Values are the
@@ -30,7 +32,7 @@ export async function loadMoveTable(moveNames: string[], types: string[], catalo
         p.type ? types.indexOf(p.type.name) : null,
       ])
       .sort((a: PastMoveValue, b: PastMoveValue) => a[0] - b[0]);
-    const name = (m.names || []).find((n: any) => n.language.name === 'en')?.name || m.name;
+    const name = localName(m.names, 'en') || m.name;
     return [name, types.indexOf(m.type.name), DAMAGE_CLASSES.indexOf(m.damage_class?.name || 'status'), m.power, m.accuracy, m.pp, past];
   });
 
@@ -47,5 +49,6 @@ export async function loadMoveTable(moveNames: string[], types: string[], catalo
     const machine = await cachedFetchJson(`https://pokeapi.co/api/v2/machine/${idFromUrl(ref.url)}/`);
     (machines[ref.game] ||= {})[ref.move] = machine.item.name.toUpperCase();
   });
-  return { table: { moves, machines }, indexOf };
+  const spanishNames = data.map((m: any, i: number) => localName(m.names, 'es') || moves[i][0]);
+  return { table: { moves, machines }, indexOf, spanishNames };
 }

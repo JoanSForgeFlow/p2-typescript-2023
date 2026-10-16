@@ -2,7 +2,9 @@ import { cachedFetchJson } from "../fetch-cache";
 import type { PokemonDetails } from "../pokemon-detail";
 import { STAT_KEYS, type Ability, type Encounter, type EncounterRow, type EntryGroup, type LearnRow, type PageData, type Variety } from "../shared/model";
 import { titleCase } from "../shared/format";
-import { genNumber, type GameCatalog } from "./games";
+import type { Lang } from "../shared/i18n";
+import { genNumber, versionLabel, type GameCatalog } from "./games";
+import { areaQualifier, encounterConditionLabel, encounterMethodLabel, localName, locationLabel, nameIn, resourceName, spanishVarietyLabels } from "./localize";
 import type { MoveIndex } from "./moves";
 
 export interface BuildContext {
@@ -10,6 +12,7 @@ export interface BuildContext {
   dexMembers: Map<string, Set<string>>;
   moves: MoveIndex;
   methods: string[];
+  lang: Lang;
 }
 
 const en = (list: any[] | undefined): any => (list || []).find((x: any) => x.language?.name === 'en');
@@ -26,46 +29,59 @@ const methodIndex = (ctx: BuildContext, method: string): number => {
   return i;
 };
 
-export function groupEntries(ctx: BuildContext, entries: { version: string; flavor_text: string }[]): EntryGroup[] {
-  const groups = new Map<string, string[]>();
+export function groupEntries(ctx: BuildContext, entries: { version: string; flavor_text: string; lang?: string }[]): EntryGroup[] {
+  const groups = new Map<string, EntryGroup>();
   for (const e of entries) {
     if (!ctx.catalog.versionLabels.has(e.version)) continue;
     const text = cleanText(e.flavor_text);
-    if (!groups.has(text)) groups.set(text, []);
-    if (!groups.get(text)!.includes(e.version)) groups.get(text)!.push(e.version);
+    if (!groups.has(text)) groups.set(text, { text, versions: [], ...(e.lang ? { lang: e.lang } : {}) });
+    if (!groups.get(text)!.versions.includes(e.version)) groups.get(text)!.versions.push(e.version);
   }
   const order = (v: string) => ctx.catalog.versionOrder.get(v) ?? 0;
-  return Array.from(groups, ([text, versions]) => ({ text, versions: versions.sort((a, b) => order(b) - order(a)) }))
-    .sort((a, b) => order(b.versions[0]) - order(a.versions[0]));
+  for (const g of groups.values()) g.versions.sort((a, b) => order(b) - order(a));
+  return Array.from(groups.values()).sort((a, b) => order(b.versions[0]) - order(a.versions[0]));
+}
+
+// Flavor text in the page's language, else English marked as such.
+function localEntries(list: any[] | undefined, lang: Lang): { version: string; flavor_text: string; lang?: string }[] {
+  const pick = (code: string) => (list || []).filter((e: any) => e.language.name === code)
+    .map((e: any) => ({ version: e.version.name, flavor_text: e.flavor_text, ...(code !== lang ? { lang: code } : {}) }));
+  const own = pick(lang);
+  return own.length ? own : pick('en');
 }
 
 const areaNames = new Map<string, Promise<string>>();
 
 // Area names in PokeAPI are inconsistent ("Road 1" for Route 1), so the
 // location's name is used, plus the floor/section the area adds ("Mt. Moon (1F)").
-function areaName(areaUrl: string): Promise<string> {
-  if (!areaNames.has(areaUrl)) {
-    areaNames.set(areaUrl, (async () => {
+function areaName(areaUrl: string, lang: Lang): Promise<string> {
+  const key = `${lang} ${areaUrl}`;
+  if (!areaNames.has(key)) {
+    areaNames.set(key, (async () => {
       const area = await cachedFetchJson(areaUrl);
       const location = await cachedFetchJson(area.location.url);
-      const base = en(location.names)?.name || titleCase(location.name);
+      const base = locationLabel(location, lang);
       const areaLabel: string = en(area.names)?.name || '';
       const paren = areaLabel.match(/\(([^)]+)\)\s*$/);
-      if (paren) return `${base} (${paren[1]})`;
+      // Some areas just repeat the location's name ("Lilycove City (Lilycove City)").
+      if (paren && paren[1] === locationLabel(location, 'en')) return base;
+      if (paren) return `${base} (${await areaQualifier(paren[1], lang)})`;
       const rest = area.name.startsWith(location.name + '-') ? area.name.slice(location.name.length + 1) : '';
       if (!rest || rest === 'area') return base;
       const pretty = rest.split('-').map((w: string) => /^b?\d+f$/.test(w) ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-      return `${base} (${pretty})`;
+      return `${base} (${await areaQualifier(pretty, lang)})`;
     })());
   }
-  return areaNames.get(areaUrl)!;
+  return areaNames.get(key)!;
 }
 
+// Encounters are merged by method and conditions, then stored with their
+// display labels, so the page doesn't need the label tables.
 async function loadEncounters(ctx: BuildContext, pokemonUrl: string): Promise<Record<string, Encounter[]>> {
   const data = await cachedFetchJson(`${pokemonUrl.replace(/\/$/, '')}/encounters`);
   const byVersion: Record<string, Map<string, Encounter>> = {};
   for (const entry of data) {
-    const area = await areaName(entry.location_area.url);
+    const area = await areaName(entry.location_area.url, ctx.lang);
     for (const vd of entry.version_details) {
       const version = vd.version.name;
       if (!ctx.catalog.versionLabels.has(version) || version.endsWith('-japan')) continue;
@@ -84,21 +100,32 @@ async function loadEncounters(ctx: BuildContext, pokemonUrl: string): Promise<Re
       }
     }
   }
+  const label = (version: string) => versionLabel(ctx.catalog, version, ctx.lang);
   const result: Record<string, Encounter[]> = {};
   for (const [version, rows] of Object.entries(byVersion)) {
-    result[version] = Array.from(rows.values()).sort((a, b) => a.area.localeCompare(b.area, 'en', { numeric: true }) || b.chance - a.chance);
+    const labelled = await Promise.all(Array.from(rows.values()).map(async (r) => ({
+      ...r,
+      method: encounterMethodLabel(r.method, ctx.lang),
+      conditions: (await Promise.all(r.conditions.map(c => encounterConditionLabel(c, ctx.lang, label)))).filter(Boolean),
+    })));
+    result[version] = labelled.sort((a, b) => a.area.localeCompare(b.area, ctx.lang, { numeric: true }) || b.chance - a.chance);
   }
   return result;
 }
 
-async function loadAbilities(pokemon: any): Promise<Ability[]> {
+async function loadAbilities(pokemon: any, lang: Lang): Promise<Ability[]> {
   return Promise.all(pokemon.abilities.map(async (a: any): Promise<Ability> => {
     const data = await cachedFetchJson(a.ability.url);
+    const flavor = (code: string) => (data.flavor_text_entries || []).filter((e: any) => e.language.name === code).pop()?.flavor_text;
+    const effect = en(data.effect_entries)?.effect;
+    const text = lang === 'en'
+      ? (effect || en(data.flavor_text_entries)?.flavor_text)
+      : (flavor(lang) || effect || flavor('en'));
     return {
       name: a.ability.name,
-      label: en(data.names)?.name || titleCase(a.ability.name),
+      label: localName(data.names, lang) || titleCase(a.ability.name),
       hidden: a.is_hidden,
-      text: en(data.effect_entries)?.effect ? cleanText(en(data.effect_entries).effect) : (en(data.flavor_text_entries)?.flavor_text ? cleanText(en(data.flavor_text_entries).flavor_text) : 'No description available.'),
+      text: text ? cleanText(text) : (lang === 'es' ? 'Sin descripción.' : 'No description available.'),
     };
   }));
 }
@@ -123,6 +150,7 @@ function learnsets(ctx: BuildContext, pokemon: any): Record<string, LearnRow[]> 
 
 export async function buildPageData(details: PokemonDetails, ctx: BuildContext): Promise<PageData> {
   const species = await cachedFetchJson(`https://pokeapi.co/api/v2/pokemon-species/${details.id}`);
+  const spanishLabels = ctx.lang === 'es' ? await spanishVarietyLabels(details.id) : null;
   const defaultFirst = [...details.varieties].sort((a, b) => Number(b.is_default) - Number(a.is_default));
   const learnsetTable: Record<string, LearnRow[]>[] = [];
   const learnsetKeys: string[] = [];
@@ -157,7 +185,9 @@ export async function buildPageData(details: PokemonDetails, ctx: BuildContext):
     const showdown = sprites.other?.showdown || {};
     const bw = sprites.versions?.['generation-v']?.['black-white']?.animated || {};
     const suffix = v.name.startsWith(details.codename + '-') ? v.name.slice(details.codename.length + 1) : v.name.split('-').slice(1).join('-');
-    const label = v.is_default ? details.name : (en(form?.names)?.name || `${details.name} (${titleCase(suffix)})`);
+    const label = v.is_default
+      ? details.name
+      : spanishLabels?.get(v.name) || en(form?.names)?.name || `${details.name} (${titleCase(suffix)})`;
 
     const sets = learnsets(ctx, pokemon);
     const key = JSON.stringify(sets);
@@ -173,9 +203,6 @@ export async function buildPageData(details: PokemonDetails, ctx: BuildContext):
       for (const [game, members] of ctx.dexMembers) if (members.has(details.codename)) games.add(game);
     }
 
-    const formEntries = form ? (form.flavor_text_entries || []).filter((e: any) => e.language.name === 'en')
-      .map((e: any) => ({ version: e.version.name, flavor_text: e.flavor_text })) : [];
-
     return {
       name: v.name,
       label,
@@ -190,7 +217,7 @@ export async function buildPageData(details: PokemonDetails, ctx: BuildContext):
       baseExp: pokemon.base_experience ?? null,
       height: pokemon.height,
       weight: pokemon.weight,
-      abilities: await loadAbilities(pokemon),
+      abilities: await loadAbilities(pokemon, ctx.lang),
       art: officialArt.front_default || sprites.front_default || details.officialArtworkUrl,
       shiny: officialArt.front_shiny || sprites.front_shiny || '',
       anim: showdown.front_default || bw.front_default || '',
@@ -199,10 +226,11 @@ export async function buildPageData(details: PokemonDetails, ctx: BuildContext):
       games: ctx.catalog.games.filter(g => games.has(g.key)).map(g => g.key),
       learnset,
       encounters: compactEncounters(await loadEncounters(ctx, v.is_default ? `https://pokeapi.co/api/v2/pokemon/${details.id}` : v.url)),
-      entries: v.is_default ? null : groupEntries(ctx, formEntries),
+      entries: v.is_default ? null : groupEntries(ctx, form ? localEntries(form.flavor_text_entries, ctx.lang) : []),
     };
   }));
 
+  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
   return {
     dex: details.id,
     name: details.name,
@@ -216,12 +244,12 @@ export async function buildPageData(details: PokemonDetails, ctx: BuildContext):
     profile: {
       genderRate: details.genderRate,
       genderDiff: !!species.has_gender_differences,
-      eggGroups: details.eggGroups,
+      eggGroups: await Promise.all((species.egg_groups || []).map((g: any) => resourceName(g.url, ctx.lang, g.name))),
       hatchCounter: species.hatch_counter ?? 0,
       captureRate: details.captureRate,
       baseHappiness: details.baseHappiness,
       growthRate: details.growthRate,
-      habitat: details.habitat,
+      habitat: species.habitat ? capitalize(await resourceName(species.habitat.url, ctx.lang, species.habitat.name)) : '',
       generation: genNumber(details.generation),
     },
   };

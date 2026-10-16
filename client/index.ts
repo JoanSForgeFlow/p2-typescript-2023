@@ -1,13 +1,15 @@
 import type { PageData, Variety } from "../shared/model";
-import { STAT_KEYS, STAT_LABELS } from "../shared/model";
+import { STAT_KEYS } from "../shared/model";
 import { escapeHtml, searchKey, typeTags } from "../shared/format";
 import { icon } from "../shared/icons";
+import { plural, setTypeLabels, statLabel, t } from "../shared/i18n";
 import { $, initCommon, loadPage, storeGame, storedGame } from "./common";
 
 interface IndexData {
   total: number;
   games: { key: string; label: string }[];
   generationLabels: Record<string, string>;
+  typeLabels?: Record<string, string>;
 }
 
 interface Filters {
@@ -24,6 +26,7 @@ interface Filters {
 }
 
 const data: IndexData = JSON.parse($("index-data").textContent || "{}");
+setTypeLabels(data.typeLabels);
 const cards = Array.from(document.querySelectorAll<HTMLAnchorElement>(".pokemon-card"));
 const searchInput = $<HTMLInputElement>("search-input");
 const gameFilter = $<HTMLSelectElement>("game-filter");
@@ -86,7 +89,7 @@ function loadFilters(): void {
 }
 
 const formsChanged = (f: Filters): boolean => !f.species || f.regional || f.battle || f.other;
-const plural = (count: number): string => `${count} ${count === 1 ? "result" : "results"}`;
+const resultText = (count: number): string => plural(count, "results.one", "results.many");
 
 function filterPokemons(): void {
   const f = readFilters();
@@ -120,8 +123,8 @@ function filterPokemons(): void {
     if (filtered) sessionStorage.setItem("filteredPokemonNav", JSON.stringify(visibleNav));
     else sessionStorage.removeItem("filteredPokemonNav");
   } catch (e) { /* the detail arrows fall back to dex order */ }
-  resultsCount.textContent = filtered ? plural(visibleNav.length) : `${data.total} Pokémon`;
-  filtersApply.textContent = visibleNav.length ? `Show ${plural(visibleNav.length)}` : "No results";
+  resultsCount.textContent = filtered ? resultText(visibleNav.length) : t("index.count", { n: data.total });
+  filtersApply.textContent = visibleNav.length ? t("filters.showN", { results: resultText(visibleNav.length) }) : t("filters.noResults");
   filtersBadge.textContent = String(facets);
   filtersBadge.hidden = facets === 0;
   clearFiltersBtn.hidden = !filtered;
@@ -134,13 +137,18 @@ function renderActiveFilters(f: Filters, noCategory: boolean, gameIndex: number)
   if (gameIndex !== -1) chips.push(["game", `${icon("gamepad")}${escapeHtml(data.games[gameIndex].label)}`]);
   if (f.type) chips.push(["type", typeTags([f.type])]);
   if (f.generation) chips.push(["generation", data.generationLabels[f.generation]]);
-  if (!noCategory) chips.push(["category", f.baby ? "Baby" : f.legendary ? "Legendary" : "Mythical"]);
+  if (!noCategory) chips.push(["category", t(f.baby ? "cat.baby" : f.legendary ? "cat.legendary" : "cat.mythical")]);
   if (formsChanged(f)) {
-    const shown = [f.species && "Species", f.regional && "Regional", f.battle && "Battle", f.other && "Other"].filter(Boolean);
-    chips.push(["forms", `Showing: ${shown.join(", ") || "none"}`]);
+    const shown = [
+      f.species && t("show.short.species"),
+      f.regional && t("show.short.regional"),
+      f.battle && t("show.short.battle"),
+      f.other && t("show.short.other"),
+    ].filter(Boolean);
+    chips.push(["forms", t("filters.showing", { list: shown.join(", ") || t("filters.none") })]);
   }
   activeFilters.innerHTML = chips.map(([facet, label]) =>
-    `<button type="button" class="active-chip" data-clear="${facet}" title="Remove filter">${label}${icon("close")}</button>`).join("");
+    `<button type="button" class="active-chip" data-clear="${facet}" title="${t("filters.remove")}">${label}${icon("close")}</button>`).join("");
   activeFilters.hidden = chips.length === 0;
 }
 
@@ -224,7 +232,7 @@ function initCompare(): void {
   const results = $("compare-results");
 
   const updateBar = () => {
-    slot1.textContent = picks[0] ? picks[0].name : "Pick a Pokémon";
+    slot1.textContent = picks[0] ? picks[0].name : t("compare.pick1");
     slot1.classList.toggle("filled", picks.length > 0);
     if (picks.length === 1) {
       // Mirror the first pick as a faded hint: comparing now pits the
@@ -232,7 +240,7 @@ function initCompare(): void {
       slot2.textContent = picks[0].name;
       slot2.classList.add("compare-slot-mirror");
     } else {
-      slot2.textContent = picks[1] ? picks[1].name : "Pick another";
+      slot2.textContent = picks[1] ? picks[1].name : t("compare.pick2");
       slot2.classList.remove("compare-slot-mirror");
     }
     slot2.classList.toggle("filled", picks.length > 1);
@@ -297,8 +305,8 @@ function initCompare(): void {
       <div class="compare-art"><img id="compare-img-${n}" src="${v.art}" alt="" crossorigin="anonymous"></div>
       <h3 id="compare-name-${n}">${escapeHtml(v.label)}</h3>
       <div class="compare-types" id="compare-types-${n}">${typeTags(v.types)}</div>
-      ${page.varieties.length > 1 ? `<div class="select-wrap"><select id="compare-form-${n}" aria-label="Form">${page.varieties.map(o => `<option value="${o.name}"${o.name === v.name ? " selected" : ""}>${escapeHtml(o.label)}</option>`).join("")}</select></div>` : ""}
-      ${v.cry ? `<div class="compare-cry"><audio id="compare-cry-${n}" src="${v.cry}" preload="none"></audio><button type="button" class="cry-button" data-audio="compare-cry-${n}">${icon("volume")}<span>Cry</span></button></div>` : ""}
+      ${page.varieties.length > 1 ? `<div class="select-wrap"><select id="compare-form-${n}" aria-label="${t("detail.form")}">${page.varieties.map(o => `<option value="${o.name}"${o.name === v.name ? " selected" : ""}>${escapeHtml(o.label)}</option>`).join("")}</select></div>` : ""}
+      ${v.cry ? `<div class="compare-cry"><audio id="compare-cry-${n}" src="${v.cry}" preload="none"></audio><button type="button" class="cry-button" data-audio="compare-cry-${n}">${icon("volume")}<span>${t("detail.cry")}</span></button></div>` : ""}
     </div>`;
   const row = (label: string, v1: number, v2: number, max: number, extra: string) => {
     const w1 = v1 >= v2 ? " win" : "";
@@ -308,8 +316,8 @@ function initCompare(): void {
   };
   const statsHtml = (a: Variety, b: Variety) => {
     const total = (v: Variety) => v.stats.reduce((x, y) => x + y, 0);
-    return STAT_KEYS.map((k, i) => row(STAT_LABELS[k], a.stats[i], b.stats[i], 255, "")).join("")
-      + row("Total", total(a), total(b), Math.max(800, total(a), total(b)), " cmp-total");
+    return STAT_KEYS.map((k, i) => row(statLabel(k), a.stats[i], b.stats[i], 255, "")).join("")
+      + row(t("stats.total"), total(a), total(b), Math.max(800, total(a), total(b)), " cmp-total");
   };
 
   goBtn.addEventListener("click", async () => {
@@ -317,13 +325,13 @@ function initCompare(): void {
     // With a single Pokémon selected, compare it against itself so its forms
     // can be pitted against each other via the per-side selectors.
     const [p1, p2] = [picks[0], picks[1] || picks[0]];
-    results.innerHTML = '<p class="compare-loading">Loading…</p>';
+    results.innerHTML = `<p class="compare-loading">${t("compare.loading")}</p>`;
     openModal();
     let pages: [PageData, PageData];
     try {
       pages = await Promise.all([loadPage(p1.dex), loadPage(p2.dex)]);
     } catch (e) {
-      results.innerHTML = '<p class="compare-loading">Could not load the comparison. Check your connection and try again.</p>';
+      results.innerHTML = `<p class="compare-loading">${t("compare.error")}</p>`;
       return;
     }
     const pick = (page: PageData, name: string) => page.varieties.find(v => v.name === name) || page.varieties[0];

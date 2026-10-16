@@ -6,13 +6,15 @@ import { mapWithConcurrency } from "./concurrency";
 import { cachedFetchJson } from "./fetch-cache";
 import { ensureRegionsLoaded, REGION_TOKENS } from "./regions";
 import { ensureTypesLoaded, ALL_TYPES } from "./types";
-import { loadGames, loadPokedexMembers } from "./lib/games";
+import { gameLabel, loadGames, loadPokedexMembers, versionLabel } from "./lib/games";
 import { loadMoveTable } from "./lib/moves";
 import { loadTypeChart } from "./lib/type-chart";
 import { buildPageData, type BuildContext } from "./lib/page-data";
+import { localName } from "./lib/localize";
 import { bestGame } from "./shared/sections";
 import { detailFile, dexNo } from "./shared/format";
-import type { Meta, PageData } from "./shared/model";
+import { LANGS, langDir, setLang, setTypeLabels, type Lang } from "./shared/i18n";
+import type { Meta, MoveRow, MoveTable, PageData } from "./shared/model";
 import { renderPokemonIndex } from "./render/index-page";
 import { renderPokemonDetail } from "./render/detail-page";
 import { SITE_URL, setAssetVersions } from "./render/components";
@@ -48,18 +50,26 @@ async function generateSite() {
     loadMoveTable(moveList.results.map((m: any) => m.name), ALL_TYPES, catalog),
     loadTypeChart(ALL_TYPES, latestGen),
   ]);
-  const ctx: BuildContext = { catalog, dexMembers, moves, methods: [] };
+  const methods: string[] = [];
 
+  // Every page and data file exists once per language: English at the root,
+  // Spanish under es/.
   const pokemons = await loadPokemons(TOTAL);
-  const pages = new Map<number, PageData>();
-  await mapWithConcurrency(pokemons, 10, async (pokemon) => {
-    const details = await loadPokemonDetails(pokemon.id);
-    if (!details) {
-      console.warn(`Failed to load details for Pokémon with ID ${pokemon.id}.`);
-      return;
-    }
-    pages.set(pokemon.id, await buildPageData(details, ctx));
-  });
+  const pagesByLang = new Map<Lang, Map<number, PageData>>();
+  for (const lang of LANGS) {
+    const ctx: BuildContext = { catalog, dexMembers, moves, methods, lang };
+    const langPages = new Map<number, PageData>();
+    await mapWithConcurrency(pokemons, 10, async (pokemon) => {
+      const details = await loadPokemonDetails(pokemon.id, lang);
+      if (!details) {
+        console.warn(`Failed to load details for Pokémon with ID ${pokemon.id}.`);
+        return;
+      }
+      langPages.set(pokemon.id, await buildPageData(details, ctx));
+    });
+    pagesByLang.set(lang, langPages);
+  }
+  const pages = pagesByLang.get('en')!;
 
   // Which games PokeAPI actually has learnsets, encounters and Pokédex text
   // for, so pages default to a game with data and say when one is missing.
@@ -72,40 +82,59 @@ async function generateSite() {
     for (const v of page.varieties) for (const version of Object.keys(v.encounters)) withLocations.add(gameOfVersion.get(version) || '');
     for (const e of page.entries) for (const version of e.versions) withEntries.add(gameOfVersion.get(version) || '');
   }
-  const meta: Meta = {
-    games: catalog.games.map(({ versionGroups, pokedexes, ...g }) => ({
-      ...g,
-      hasMoves: withMoves.has(g.key),
-      hasLocations: withLocations.has(g.key),
-      hasEntries: withEntries.has(g.key),
-    })),
-    versionLabels: Object.fromEntries(catalog.versionLabels),
+  const typeData = await Promise.all(ALL_TYPES.map(type => cachedFetchJson(`https://pokeapi.co/api/v2/type/${type}/`)));
+  const metaFor = (lang: Lang): Meta => ({
+    games: catalog.games.map((game) => {
+      const { versionGroups, pokedexes, ...g } = game;
+      return {
+        ...g,
+        label: gameLabel(catalog, game, lang),
+        versions: g.versions.map(v => ({ key: v.key, label: versionLabel(catalog, v.key, lang) })),
+        hasMoves: withMoves.has(g.key),
+        hasLocations: withLocations.has(g.key),
+        hasEntries: withEntries.has(g.key),
+      };
+    }),
+    versionLabels: Object.fromEntries(Array.from(catalog.versionLabels.keys(), v => [v, versionLabel(catalog, v, lang)])),
     types: ALL_TYPES,
     typeIntroduced: chart.typeIntroduced,
     charts: chart.charts,
-    methods: ctx.methods,
+    methods,
     regions: REGION_TOKENS,
-  };
-  for (const page of pages.values()) page.defaultGame = bestGame(meta, page.varieties[0]).key;
+    ...(lang === 'en' ? {} : { typeLabels: Object.fromEntries(ALL_TYPES.map((type, i) => [type, localName(typeData[i].names, lang) || type])) }),
+  });
+  const moveTableFor = (lang: Lang): MoveTable => lang === 'en'
+    ? moves.table
+    : { ...moves.table, moves: moves.table.moves.map((row, i) => [moves.spanishNames[i], ...row.slice(1)] as MoveRow) };
 
   setAssetVersions(await assetVersions());
-  await mkdir("data/pokemon", { recursive: true });
-  await writeFile("data/meta.json", JSON.stringify(meta));
-  await writeFile("data/moves.json", JSON.stringify(moves.table));
-  for (const page of pages.values()) await writeFile(`data/pokemon/${dexNo(page.dex)}.json`, JSON.stringify(page));
+  for (const lang of LANGS) {
+    setLang(lang);
+    const dir = langDir(lang);
+    const meta = metaFor(lang);
+    setTypeLabels(meta.typeLabels);
+    const table = moveTableFor(lang);
+    const langPages = pagesByLang.get(lang)!;
+    for (const page of langPages.values()) page.defaultGame = bestGame(meta, page.varieties[0]).key;
+    await mkdir(`${dir}data/pokemon`, { recursive: true });
+    await writeFile(`${dir}data/meta.json`, JSON.stringify(meta));
+    await writeFile(`${dir}data/moves.json`, JSON.stringify(table));
+    for (const page of langPages.values()) await writeFile(`${dir}data/pokemon/${dexNo(page.dex)}.json`, JSON.stringify(page));
 
-  await writeFile("index.html", renderPokemonIndex(pokemons, pages, meta, ALL_TYPES));
-  await writeFile("offline.html", renderOfflinePage());
-  await mapWithConcurrency(Array.from(pages.values()), 10, async (page) => {
-    const details = await loadPokemonDetails(page.dex);
-    if (details) await writeFile(detailFile(page.dex), renderPokemonDetail(details, page, meta, moves.table, TOTAL));
-  });
+    await writeFile(`${dir}index.html`, renderPokemonIndex(pokemons, langPages, meta, ALL_TYPES));
+    await writeFile(`${dir}offline.html`, renderOfflinePage());
+    await mapWithConcurrency(Array.from(langPages.values()), 10, async (page) => {
+      const details = await loadPokemonDetails(page.dex, lang);
+      if (details) await writeFile(`${dir}${detailFile(page.dex)}`, renderPokemonDetail(details, page, meta, table, TOTAL));
+    });
+  }
 
   const today = new Date().toISOString().slice(0, 10);
   const paths = ['', ...Array.from(pages.keys()).sort((a, b) => a - b).map(detailFile)];
+  const urls = LANGS.flatMap(lang => paths.map(p => `${SITE_URL}/${langDir(lang)}${p}`));
   await writeFile("sitemap.xml", `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${paths.map(p => `  <url><loc>${SITE_URL}/${p}</loc><lastmod>${today}</lastmod></url>`).join('\n')}
+${urls.map(url => `  <url><loc>${url}</loc><lastmod>${today}</lastmod></url>`).join('\n')}
 </urlset>
 `);
   await writeFile("robots.txt", `User-agent: *\nAllow: /\n\nSitemap: ${SITE_URL}/sitemap.xml\n`);

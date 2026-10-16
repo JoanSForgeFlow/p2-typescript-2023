@@ -126,11 +126,59 @@ check("battle-only form", (await detail.$eval("#detail-training", (e) => (e as H
   && (await detail.$eval('.evo-battle-step[data-form="mega-x"]', (e) => e.classList.contains("current"))));
 check("ability note (Levitate)", (await (await open("0479_details.html")).$eval("#ability-notes", (e) => e.textContent || "")).includes("Levitate"));
 
+// Spanish pages live under es/ and are chosen with the language button.
+for (const width of [360, 390, 1024]) {
+  for (const path of ["es/index.html", "es/0006_details.html", "es/0133_details.html", "es/0890_details.html"]) {
+    const page = await open(path, width);
+    check(`${path} fits at ${width}px`, await noSidewaysScroll(page));
+    await page.close();
+  }
+}
+const lang = await open("index.html");
+await Promise.all([lang.waitForNavigation({ waitUntil: "networkidle2" }), lang.click("#lang-switch")]);
+check("language button opens the Spanish index", new URL(lang.url()).pathname === "/es/index.html"
+  && (await lang.$eval("html", (h) => h.lang)) === "es");
+await lang.goto(ROOT + "0052_details.html#galar", { waitUntil: "networkidle2" });
+check("Spanish choice is remembered", new URL(lang.url()).pathname === "/es/0052_details.html", lang.url());
+await wait(300);
+check("Spanish form name", (await lang.$eval("#pokemon-title-name", (e) => e.textContent)) === "Meowth de Galar");
+check("Spanish matchups", (await weak(lang)) === "Fuego2×,Lucha2×,Tierra2×", await weak(lang));
+await Promise.all([lang.waitForNavigation({ waitUntil: "networkidle2" }), lang.click("#lang-switch")]);
+check("English button keeps the form", new URL(lang.url()).pathname === "/0052_details.html" && new URL(lang.url()).hash === "#galar", lang.url());
+await lang.evaluate(() => localStorage.removeItem("pokedexLang"));
+await lang.close();
+const spanish = await open("es/index.html");
+const spanishSearch = async (text: string) => {
+  await spanish.$eval("#search-input", (el, t) => {
+    (el as HTMLInputElement).value = t;
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  }, text);
+  await wait(100);
+  return spanish.$$eval(".pokemon-grid li", (lis) =>
+    lis.filter((li) => li.style.display !== "none").map((li) => li.querySelector("h2")!.textContent).join());
+};
+check("Spanish search by Spanish name", (await spanishSearch("colmilargo")) === "Colmilargo");
+check("Spanish search by English name", (await spanishSearch("great tusk")) === "Colmilargo");
+await spanish.close();
+
 // Installable app.
 const pwa = await open("index.html");
 await pwa.evaluate(() => navigator.serviceWorker.ready);
 await pwa.reload({ waitUntil: "networkidle2" });
 check("service worker active", await pwa.evaluate(() => !!navigator.serviceWorker.controller));
+// Offline for the page and the service worker (which has its own network).
+const worker = await (await browser.waitForTarget((t) => t.type() === "service_worker")).createCDPSession();
+const setOffline = async (offline: boolean) => {
+  await pwa.setOfflineMode(offline);
+  await worker.send("Network.emulateNetworkConditions", { offline, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+};
+await worker.send("Network.enable");
+await setOffline(true);
+await pwa.goto(ROOT, { waitUntil: "domcontentloaded" });
+check("offline home page", (await pwa.$eval("h1", (e) => e.textContent).catch(() => "")) === "Pokédex");
+await pwa.goto(ROOT + "es/0500_details.html", { waitUntil: "domcontentloaded" });
+check("Spanish offline page", (await pwa.$eval("h2", (e) => e.textContent).catch(() => "")) === "Sin conexión");
+await setOffline(false);
 const manifest = await (await fetch(ROOT + "manifest.webmanifest")).json();
 check("manifest icons exist", (await Promise.all(manifest.icons.map((i: any) => fetch(ROOT + i.src)))).every((r) => r.ok));
 

@@ -1,5 +1,6 @@
 import type { Game, Meta, MoveTable, PageData, Variety } from "../shared/model";
 import { escapeHtml, typeTags } from "../shared/format";
+import { t } from "../shared/i18n";
 import { typesFor } from "../shared/type-chart";
 import {
   catchRateHtml, effectiveGame, evYield, heightText, renderAbilities, renderAbilityNotes, renderDefense, renderEntries,
@@ -95,7 +96,7 @@ function renderGameSections(state: State, unavailable: Game | null): void {
     .map(g => `<option value="${g.key}"${g.key === game.key ? " selected" : ""}>${escapeHtml(g.label)}</option>`).join("");
   const note = $("game-note");
   note.hidden = !unavailable;
-  if (unavailable) note.textContent = `${variety.label} isn't in ${unavailable.label}. Showing ${game.label}.`;
+  if (unavailable) note.textContent = t("detail.notInGame", { name: variety.label, game: unavailable.label, other: game.label });
   all(".game-label").forEach(el => { el.textContent = game.label; });
 
   $("era-note").innerHTML = renderEraNote(meta, game, variety);

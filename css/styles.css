@@ -63,6 +63,14 @@
   display: none;
 }
 
+/* The smallest phones need the logo's room for the search box; the index is
+   already the home page. */
+@media (max-width: 359px) {
+  .topbar-inner:has(.search) .brand {
+    display: none;
+  }
+}
+
 .index {
   max-width: var(--max-width);
   margin: 0 auto;
@@ -952,10 +960,19 @@ body.compare-mode .pokemon-card.selected-compare::after {
     display: none;
   }
 
+  .search .icon {
+    left: 12px;
+  }
+
   .search-input {
     height: 42px;
-    padding-right: 14px;
+    padding-left: 38px;
+    padding-right: 8px;
     font-size: 16px;
+  }
+
+  .search-input::placeholder {
+    font-size: 15px;
   }
 
   .index {

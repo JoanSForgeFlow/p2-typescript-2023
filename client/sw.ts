@@ -4,7 +4,8 @@ const CORE = "pqd-core-v1";
 const RUNTIME = "pqd-runtime-v1";
 const IMAGES = "pqd-images-v1";
 const MAX_IMAGES = 800;
-const PRECACHE = ["index.html", "offline.html", "data/meta.json", "data/moves.json", "manifest.webmanifest", "icons/icon-192.png"];
+const SPANISH = new URL("es/", sw.location.href).pathname;
+const PRECACHE = ["index.html", "offline.html", "es/offline.html", "data/meta.json", "data/moves.json", "manifest.webmanifest", "icons/icon-192.png"];
 
 sw.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CORE).then((cache) => cache.addAll(PRECACHE)).then(() => sw.skipWaiting()));
@@ -18,14 +19,17 @@ sw.addEventListener("activate", (event) => {
   })());
 });
 
-async function networkFirst(request: Request, fallback?: string): Promise<Response> {
+// "/" and "/index.html" are the same page (also under es/).
+const pageKey = (url: URL): string => `${url.origin}${url.pathname}${url.pathname.endsWith("/") ? "index.html" : ""}`;
+
+async function networkFirst(request: Request, fallback?: string, key: Request | string = request): Promise<Response> {
   const cache = await caches.open(RUNTIME);
   try {
     const response = await fetch(request);
-    if (response.ok) cache.put(request, response.clone());
+    if (response.ok) cache.put(key, response.clone());
     return response;
   } catch (error) {
-    const cached = (await cache.match(request)) || (await caches.match(request, { ignoreSearch: true }));
+    const cached = (await cache.match(key)) || (await caches.match(key, { ignoreSearch: true }));
     if (cached) return cached;
     if (fallback) {
       const offline = await caches.match(fallback);
@@ -67,7 +71,7 @@ sw.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin === sw.location.origin) {
     if (url.pathname.startsWith("/_vercel/")) return;
-    if (request.mode === "navigate") event.respondWith(networkFirst(request, "offline.html"));
+    if (request.mode === "navigate") event.respondWith(networkFirst(request, url.pathname.startsWith(SPANISH) ? "es/offline.html" : "offline.html", pageKey(url)));
     else if (url.searchParams.has("v")) event.respondWith(cacheFirst(request, RUNTIME));
     else event.respondWith(networkFirst(request));
   } else if (url.hostname === "raw.githubusercontent.com" && /\.(png|gif|svg)$/.test(url.pathname)) {

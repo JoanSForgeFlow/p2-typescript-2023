@@ -3,6 +3,7 @@ import { regionOf, REGION_TOKENS } from "../regions";
 import type { PageData } from "../shared/model";
 import { icon } from "../shared/icons";
 import { artworkUrl } from "../shared/sprites";
+import { getLang, regionName, t } from "../shared/i18n";
 
 export interface EvolutionView {
   rowsHtml: string;
@@ -18,7 +19,7 @@ export function renderEvolution(pokemon: PokemonDetails, page: PageData): Evolut
       const isCurrentSpecies = evo.id === pokemon.id;
       return `
         <a href="${String(evo.id).padStart(4, '0')}_details.html${evo.hash ? `#${evo.hash}` : ''}" data-hash="${evo.hash || ''}" class="evo-step ${isCurrentSpecies && !evo.hash ? 'current' : ''}" ${isCurrentSpecies ? 'data-base="1"' : ''}>
-          ${evo.hasForms ? `<span class="evo-forms-badge" title="Has other forms"${isCurrentSpecies ? ' style="display:none;"' : ''}>+</span>` : ''}
+          ${evo.hasForms ? `<span class="evo-forms-badge" title="${t('evo.hasForms')}"${isCurrentSpecies ? ' style="display:none;"' : ''}>+</span>` : ''}
           <img src="${evo.imageUrl}" data-default-img="${artworkUrl(evo.id)}" alt="${evo.name}" loading="lazy" crossorigin="anonymous" />
           <span>${evo.name}</span>
         </a>`;
@@ -38,10 +39,9 @@ export function renderEvolution(pokemon: PokemonDetails, page: PageData): Evolut
     const renderEvolutionStep = (evo: any, isFirst: boolean = false): string => {
       let html = '';
       if (!isFirst && (evo.triggerDetails || evo.regionLabel || evo.genderLabel)) {
-        const capRegion = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
         const parts: string[] = [];
         if (evo.triggerDetails) parts.push(evo.triggerDetails);
-        if (evo.regionLabel) parts.push(`in ${capRegion(evo.regionLabel)}`);
+        if (evo.regionLabel) parts.push(t('evo.inRegion', { region: regionName(evo.regionLabel) }));
         if (evo.genderLabel) parts.push(evo.genderLabel);
         html += `<div class="evo-arrow">${icon('arrowRight')}<span class="evo-trigger">${parts.join('<br>')}</span></div>`;
       }
@@ -176,7 +176,7 @@ export function renderEvolution(pokemon: PokemonDetails, page: PageData): Evolut
             // gender on the evolution itself, so tag each branch by its form.
             if (childVariants.length > 1) {
               const suffix = childVariant.formName.startsWith(edge.node.codename + '-') ? childVariant.formName.slice(edge.node.codename.length + 1) : '';
-              child.genderLabel = suffix === 'female' ? 'Female' : 'Male';
+              child.genderLabel = suffix === 'female' ? t('evo.female') : t('evo.male');
             }
             evolvesTo.push(child);
           }
@@ -207,12 +207,12 @@ export function renderEvolution(pokemon: PokemonDetails, page: PageData): Evolut
       return { id: node.speciesId, name: displayVariant.name, imageUrl: displayVariant.imageUrl, hasForms, hash, triggerDetails, evolvesTo, battleForms };
     };
     const renderRegionChain = (region: string, chainRegions: Set<string>): string => {
-      if (!pokemon.evolutionChain) return '<p class="no-evolution">This Pokémon does not evolve.</p>';
+      if (!pokemon.evolutionChain) return `<p class="no-evolution">${t('evo.none')}</p>`;
       const root = resolveRegion(pokemon.evolutionChain, region, variantForRegion(pokemon.evolutionChain, region), '', chainRegions);
       // Render whenever there's something to show: an evolution or a battle-only
       // transformation hanging off the root (e.g. Zygarde ↔ Mega, no evolution).
       return root.evolvesTo.length === 0 && root.battleForms.length === 0
-        ? '<p class="no-evolution">This Pokémon does not evolve.</p>'
+        ? `<p class="no-evolution">${t('evo.none')}</p>`
         : renderEvolutionStep(root, true);
     };
 
@@ -351,7 +351,7 @@ export function renderEvolution(pokemon: PokemonDetails, page: PageData): Evolut
       if (cosmeticVar) {
         const root = resolveCosmetic(currentEvoNode, cosmeticVar, chainRegions);
         body = root.evolvesTo.length === 0 && root.battleForms.length === 0
-          ? '<p class="no-evolution">This Pokémon does not evolve.</p>'
+          ? `<p class="no-evolution">${t('evo.none')}</p>`
           : renderEvolutionStep(root, true);
       } else {
         body = renderRegionChain(region, chainRegions);
@@ -373,9 +373,10 @@ export function renderEvolution(pokemon: PokemonDetails, page: PageData): Evolut
       const attached = currentEvoNode.battleForms
         .filter((b: any) => b.baseForms.includes(baseFormName))
         .map((b: any) => ({ id: b.id, name: b.name, imageUrl: b.imageUrl, formName: b.formName, trigger: b.trigger }));
+      const pageLabel = getLang() === 'en' ? '' : page.varieties.find(v => v.name === baseFormName)?.label;
       const root = {
         id: pokemon.id,
-        name: `${pokemon.name} (${evoTitleCase(evoSuffixOf(baseFormName))})`,
+        name: pageLabel || `${pokemon.name} (${evoTitleCase(evoSuffixOf(baseFormName))})`,
         imageUrl: evoArtwork(varietyIdByName[baseFormName]),
         hasForms: false,
         // The node's own anchor links here (#suffix) so you can return to this
@@ -418,7 +419,7 @@ export function renderEvolution(pokemon: PokemonDetails, page: PageData): Evolut
     // from the variety id (no extra fetch needed).
     const formSquares = clusterVarieties.length > 1 ? `
           <div class="forms-cluster">
-            <span class="forms-label">Forms</span>
+            <span class="forms-label">${t('evo.forms')}</span>
             <div class="forms-list">
               ${clusterVarieties.map(v => {
                 const formId = v.url.split('/').filter(Boolean).pop();

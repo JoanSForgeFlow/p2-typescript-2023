@@ -27,6 +27,7 @@ export interface Meta {
   charts: TypeChart[];
   methods: string[];
   regions: string[];
+  typeLabels?: Record<string, string>;
 }
 
 export type PastMoveValue = [beforeOrder: number, power: number | null, accuracy: number | null, pp: number | null, type: number | null];
@@ -69,6 +70,7 @@ export type EncounterRow = number[];
 export interface EntryGroup {
   text: string;
   versions: string[];
+  lang?: string;
 }
 
 export interface Variety {
@@ -123,15 +125,6 @@ export interface PageData {
 }
 
 export const STAT_KEYS = ['hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed'];
-
-export const STAT_LABELS: Record<string, string> = {
-  hp: 'HP',
-  attack: 'Attack',
-  defense: 'Defense',
-  'special-attack': 'Sp. Atk',
-  'special-defense': 'Sp. Def',
-  speed: 'Speed',
-};
 
 export const DAMAGE_CLASSES = ['physical', 'special', 'status'];
 
