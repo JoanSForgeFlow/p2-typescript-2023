@@ -186,3 +186,9 @@ users.html
 
 #html generated with the generator
 *.html
+
+# Generated site
+/data/
+/js/
+/sitemap.xml
+/robots.txt

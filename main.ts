@@ -946,7 +946,7 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
       const evolvesTo: any[] = [];
       let evolvingForm: string | null = null;  // form of THIS node an included path says evolves
       for (const edge of node.children) {
-        const seen = new Map<string, { trigger: string; regionLabel: string }>();  // evolvedForm ('' = unspecified) → info
+        const seen = new Map<string, { trigger: string; vg: number; regionLabel: string }>();  // evolvedForm ('' = unspecified) → info
         for (const p of edge.paths) {
           const pr = pathRegion(p, node.codename);
           // A regional evolution whose region has no chain of its own (the base
@@ -967,7 +967,7 @@ function renderPokemonIndex(pokemons: Array<Pokemon>): string {
           // Only tag a real region under the arrow ("in Alola"). When several methods reach
           // the same form, keep the most recent generation's (higher version group),
           // e.g. Eevee → Leafeon: Leaf Stone over Moss Rock.
-          if (!seen.has(key) || p.vg > seen.get(key).vg) seen.set(key, { trigger: trig, vg: p.vg, regionLabel: orphanRegional && REGION_TOKENS.includes(pr) ? pr : '' });
+          if (!seen.has(key) || p.vg > seen.get(key)!.vg) seen.set(key, { trigger: trig, vg: p.vg, regionLabel: orphanRegional && REGION_TOKENS.includes(pr) ? pr : '' });
         }
         // All target variants shown for this edge (plus their battle forms), so a shown
         // sibling isn't badged "+" for a form already visible, whether siblings come from

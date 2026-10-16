@@ -1,0 +1,20 @@
+{
+  "name": "pokequickdex",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:client": "bun build client/index.ts client/detail.ts --outdir js --target browser --minify && bun build client/sw.ts --outfile sw.js --target browser --minify",
+    "generate": "bun main.ts",
+    "build": "bun run build:client && bun run generate",
+    "build:cached": "bun run build:client && CACHE_TTL_MS=99999999999999 bun main.ts",
+    "serve": "bun scripts/serve.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun tests/e2e.ts",
+    "deploy": "bash scripts/deploy.sh"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "puppeteer-core": "25.14.0",
+    "typescript": "7.0.2"
+  }
+}
