@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build:client": "bun build client/index.ts client/detail.ts client/types.ts --outdir js --target browser --minify && bun build client/sw.ts --outfile sw.js --target browser --minify && bun build functions/og.ts --outfile api/og.js --target browser --external @vercel/og",
+    "build:client": "bun build client/index.ts client/detail.ts client/types.ts --outdir js --target browser --minify && bun build client/sw.ts --outfile sw.js --target browser --minify && bun scripts/build-function.ts",
     "generate": "bun main.ts",
     "build": "bun run build:client && bun run generate",
     "build:cached": "bun run build:client && CACHE_TTL_MS=99999999999999 bun main.ts",

@@ -4,9 +4,8 @@ import { defensiveMatchups } from "../shared/type-chart";
 
 // Social card for a Pokémon page (/api/og?dex=6&lang=es): name, types and
 // weaknesses next to the artwork. Rendered on demand by a Vercel Edge Function
-// and cached for a year (the page links it with a version); colours and data
-// come from the deployed site.
-export const config = { runtime: "edge" };
+// (scripts/build-function.ts bundles it) and cached for a year, as the page
+// links it with a version; colours and data come from the deployed site.
 
 const WEAK_TO = { en: "Weak to", es: "Débil a" };
 
