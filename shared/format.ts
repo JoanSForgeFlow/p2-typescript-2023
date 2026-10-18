@@ -17,7 +17,7 @@ export const typeTags = (types: string[]): string =>
   types.map(type => `<span class="tag ${type}">${typeLabel(type)}</span>`).join('');
 
 export const typeVars = (types: string[]): string =>
-  `--tc: var(--type-${types[0]}, #9fa19f); --tc2: var(--type-${types[1] || types[0]}, #9fa19f); --tink: var(--ink-${types[0]}, #16181d)`;
+  `--tc: var(--type-${types[0]}, #9fa19f); --tc2: var(--type-${types[1] || types[0]}, #9fa19f); --tink: var(--ink-${types[0]}, #16181d); --tink2: var(--ink-${types[1] || types[0]}, #16181d)`;
 
 export const statColor = (value: number): string =>
   value < 50 ? '#f34444' : value < 80 ? '#ff7f0f' : value < 100 ? '#ffdd57' : value < 120 ? '#a0e515' : value < 150 ? '#23cd5e' : '#00c2b8';

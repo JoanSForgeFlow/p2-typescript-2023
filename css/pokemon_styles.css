@@ -17,25 +17,31 @@
   padding: 24px 24px 0;
 }
 
+/* A dual type puts its second colour behind the artwork; the text stays on
+   the first colour, whose ink (--tink) it uses. */
 .hero {
   --tc: var(--type-normal);
   --tc2: var(--tc);
   --tink: var(--ink-black);
+  --tink2: var(--tink);
   --hink: var(--tink);
+  --hbg: var(--tc);
+  --split: 105deg, var(--tc) 0 50%, var(--tc2) 62% 100%;
+  --split-dark: 105deg, color-mix(in oklab, var(--tc) 84%, black) 0 50%, color-mix(in oklab, var(--tc2) 84%, black) 62% 100%;
   position: relative;
   isolation: isolate;
   overflow: hidden;
   border-radius: 28px;
   color: var(--hink);
   background:
-    radial-gradient(70% 90% at 78% 42%, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 70%),
-    linear-gradient(135deg, var(--tc) 30%, color-mix(in oklab, var(--tc2) 72%, var(--tc)) 100%);
+    radial-gradient(70% 90% at 78% 42%, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 70%),
+    linear-gradient(var(--split));
 }
 
 html.dark-mode .hero {
   background:
-    radial-gradient(70% 90% at 78% 42%, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 70%),
-    linear-gradient(135deg, color-mix(in oklab, var(--tc) 84%, black) 30%, color-mix(in oklab, color-mix(in oklab, var(--tc2) 72%, var(--tc)) 84%, black) 100%);
+    radial-gradient(70% 90% at 78% 42%, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0) 70%),
+    linear-gradient(var(--split-dark));
 }
 
 .hero::before {
@@ -210,7 +216,7 @@ html.dark-mode .hero {
 
 .hero-btn.active {
   background: var(--hink);
-  color: var(--tc);
+  color: var(--hbg);
 }
 
 .hero-art {
@@ -824,6 +830,18 @@ html.dark-mode .hero {
     min-height: 0;
     padding: 32px 32px 76px;
     text-align: center;
+  }
+
+  .hero {
+    --split: 180deg, var(--tc) 0 30%, var(--tc2) 46% 100%;
+    --split-dark: 180deg, color-mix(in oklab, var(--tc) 84%, black) 0 30%, color-mix(in oklab, var(--tc2) 84%, black) 46% 100%;
+  }
+
+  /* Stacked layout: the buttons sit on the second colour. */
+  .hero-actions {
+    --hink: var(--tink2);
+    --hbg: var(--tc2);
+    color: var(--hink);
   }
 
   .hero::before {

@@ -301,7 +301,7 @@ function initCompare(): void {
   });
 
   const side = (page: PageData, v: Variety, n: number) => `
-    <div class="compare-pokemon" id="compare-side-${n}" style="--tc: var(--type-${v.types[0]})">
+    <div class="compare-pokemon" id="compare-side-${n}" style="--tc: var(--type-${v.types[0]}); --tc2: var(--type-${v.types[1] || v.types[0]})">
       <div class="compare-art"><img id="compare-img-${n}" src="${v.art}" alt="" crossorigin="anonymous"></div>
       <h3 id="compare-name-${n}">${escapeHtml(v.label)}</h3>
       <div class="compare-types" id="compare-types-${n}">${typeTags(v.types)}</div>
@@ -354,6 +354,7 @@ function initCompare(): void {
         $(`compare-name-${i + 1}`).textContent = v.label;
         $(`compare-types-${i + 1}`).innerHTML = typeTags(v.types);
         $(`compare-side-${i + 1}`).style.setProperty("--tc", `var(--type-${v.types[0]})`);
+        $(`compare-side-${i + 1}`).style.setProperty("--tc2", `var(--type-${v.types[1] || v.types[0]})`);
         const cry = document.getElementById(`compare-cry-${i + 1}`) as HTMLAudioElement | null;
         if (cry && v.cry) cry.src = v.cry;
         updateStats();

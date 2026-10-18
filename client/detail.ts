@@ -149,6 +149,7 @@ function selectVariety(state: State, variety: Variety, swapChain: boolean): void
   hero.style.setProperty("--tc", `var(--type-${variety.types[0]}, #9fa19f)`);
   hero.style.setProperty("--tc2", `var(--type-${variety.types[1] || variety.types[0]}, #9fa19f)`);
   hero.style.setProperty("--tink", `var(--ink-${variety.types[0]}, #16181d)`);
+  hero.style.setProperty("--tink2", `var(--ink-${variety.types[1] || variety.types[0]}, #16181d)`);
   $("pokemon-title-name").textContent = variety.title;
   setArtwork(state);
   $("shiny-toggle").hidden = !variety.shiny;

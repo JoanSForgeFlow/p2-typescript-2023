@@ -422,9 +422,10 @@
   display: grid;
   place-items: center;
   overflow: hidden;
+  /* Dual types split diagonally so both colours read at a glance. */
   background:
-    radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.5) 0, rgba(255, 255, 255, 0) 56px),
-    linear-gradient(135deg, var(--tc) 30%, color-mix(in oklab, var(--tc2) 75%, var(--tc)) 100%);
+    radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.45) 0, rgba(255, 255, 255, 0) 60px),
+    linear-gradient(135deg, var(--tc) 0 47%, var(--tc2) 53% 100%);
 }
 
 .card-art::before {
@@ -444,8 +445,8 @@
 
 html.dark-mode .card-art {
   background:
-    radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.32) 0, rgba(255, 255, 255, 0) 56px),
-    linear-gradient(135deg, color-mix(in oklab, var(--tc) 82%, black) 30%, color-mix(in oklab, color-mix(in oklab, var(--tc2) 75%, var(--tc)) 82%, black) 100%);
+    radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.3) 0, rgba(255, 255, 255, 0) 60px),
+    linear-gradient(135deg, color-mix(in oklab, var(--tc) 82%, black) 0 47%, color-mix(in oklab, var(--tc2) 82%, black) 53% 100%);
 }
 
 .card-art img {
@@ -715,7 +716,7 @@ body.compare-mode .pokemon-card.selected-compare::after {
   border-radius: 50%;
   background:
     radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.45), transparent 62%),
-    var(--tc);
+    linear-gradient(135deg, var(--tc) 0 47%, var(--tc2, var(--tc)) 53% 100%);
 }
 
 .compare-art img {
