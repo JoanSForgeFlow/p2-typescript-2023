@@ -4,7 +4,7 @@ import { getLang, langDir, rootPath, t, type Lang } from "../shared/i18n";
 
 export { icon };
 
-export const SITE_URL = 'https://pokequickdex.vercel.app';
+export const SITE_URL = 'https://pokequickdex.com';
 
 let assetVersions: Record<string, string> = {};
 

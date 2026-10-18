@@ -1,5 +1,11 @@
 {
   "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.pokequickdex.com" }],
+      "destination": "https://pokequickdex.com/:path*",
+      "permanent": true
+    },
     { "source": "/es", "destination": "/es/", "permanent": true }
   ]
 }
