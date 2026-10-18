@@ -1,7 +1,7 @@
 {
   "redirects": [
     {
-      "source": "/(.*)",
+      "source": "/((?!google[0-9a-f]+\\.html$).*)",
       "has": [{ "type": "host", "value": "pokequickdex.vercel.app" }],
       "destination": "https://pokequickdex.com/$1",
       "permanent": true
