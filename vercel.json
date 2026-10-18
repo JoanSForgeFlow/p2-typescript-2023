@@ -2,6 +2,12 @@
   "redirects": [
     {
       "source": "/:path*",
+      "has": [{ "type": "host", "value": "pokequickdex.vercel.app" }],
+      "destination": "https://pokequickdex.com/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
       "has": [{ "type": "host", "value": "www.pokequickdex.com" }],
       "destination": "https://pokequickdex.com/:path*",
       "permanent": true
