@@ -3,6 +3,7 @@
 import puppeteer, { type Page } from "puppeteer-core";
 import type { AddressInfo } from "net";
 import { serve } from "../scripts/serve";
+import socialCard from "../functions/og";
 
 const server = await serve(".", 0);
 const ROOT = `http://127.0.0.1:${(server.address() as AddressInfo).port}/`;
@@ -52,8 +53,10 @@ for (const width of [360, 390, 768, 1024, 1440]) {
   }
   await index.click("#compare-mode-btn");
   const cards = await index.$$('.pokemon-grid li:not([style*="none"]) .pokemon-card');
-  await cards[5].click();
-  await cards[8].click();
+  for (const card of [cards[5], cards[8]]) {
+    await card.evaluate((el) => el.scrollIntoView({ block: "center" }));
+    await card.click();
+  }
   check(`compare bar fits at ${width}px`, await fitsScreen(index, "#compare-bar"));
   await index.close();
   for (const dex of ["0006", "0133", "0479", "0890"]) {
@@ -93,8 +96,10 @@ await wait(200);
 // Compare uses the generated data, not PokeAPI.
 await index.click("#compare-mode-btn");
 const cards = await index.$$('.pokemon-grid li:not([style*="none"]) .pokemon-card');
-await cards[5].click();
-await cards[8].click();
+for (const card of [cards[5], cards[8]]) {
+  await card.evaluate((el) => el.scrollIntoView({ block: "center" }));
+  await card.click();
+}
 await index.click("#compare-btn");
 await wait(800);
 check("compare", (await index.$$eval(".compare-pokemon h3", (h) => h.map((e) => e.textContent).join())) === "Charizard,Blastoise");
@@ -160,6 +165,69 @@ const spanishSearch = async (text: string) => {
 check("Spanish search by Spanish name", (await spanishSearch("colmilargo")) === "Colmilargo");
 check("Spanish search by English name", (await spanishSearch("great tusk")) === "Colmilargo");
 await spanish.close();
+
+// Titles say what people search for.
+const titled = await open("es/0006_details.html");
+check("Spanish detail title", (await titled.title()) === "Charizard: debilidades, movimientos y dónde encontrarlo · PokeQuickDex", await titled.title());
+await titled.close();
+
+// Type chart page: calculator for one or two types and the chart of each generation.
+for (const width of [360, 390, 1024]) {
+  for (const path of ["types.html", "es/types.html"]) {
+    const page = await open(path, width);
+    check(`${path} fits at ${width}px`, await noSidewaysScroll(page));
+    const clipped = await page.$$eval(".type-pick", (bs) => bs.filter((b) => b.scrollWidth > b.clientWidth + 0.5).length);
+    check(`${path} type names fit at ${width}px`, clipped === 0, `${clipped} clipped`);
+    await page.close();
+  }
+}
+const chart = await open("types.html");
+const pick = (type: string) => chart.click(`.type-pick[data-type="${type}"]`);
+await pick("water");
+await pick("ground");
+check("calculator: Water/Ground is 4x weak to Grass and immune to Electric",
+  (await weak(chart)) === "grass4×" && (await chart.$eval(".mu-immune", (e) => e.textContent || "")).includes("electric"));
+check("calculator selection is linkable", new URL(chart.url()).hash === "#water-ground");
+await pick("fire");
+check("a third type replaces the oldest", new URL(chart.url()).hash === "#ground-fire");
+await chart.select("#game-select", "red-blue");
+await wait(200);
+check("Gen 1 chart has no Dark, Steel or Fairy", (await chart.$$eval("#type-chart thead th", (th) => th.length)) === 16
+  && await chart.$eval('.type-pick[data-type="fairy"]', (b) => (b as HTMLButtonElement).disabled));
+await chart.evaluate(() => localStorage.removeItem("pokedexGame"));
+await chart.close();
+
+// Share and install.
+const sharing = await open("0025_details.html", 1280);
+await sharing.evaluate(() => { (navigator as { share?: unknown }).share = undefined; });
+await sharing.click("#share-btn");
+await wait(300);
+check("share copies the link when there is no share sheet", ((await sharing.$eval("#toast", (e) => e.textContent).catch(() => "")) || "").length > 0);
+await sharing.close();
+const installing = await open("index.html");
+await installing.evaluate(() => {
+  localStorage.setItem("pqdViews", "5");
+  localStorage.removeItem("installDismissed");
+});
+await installing.reload({ waitUntil: "networkidle2" });
+await installing.evaluate(() => {
+  const prompt = Object.assign(new Event("beforeinstallprompt"), {
+    prompt: () => { (window as { prompted?: boolean }).prompted = true; return Promise.resolve(); },
+    userChoice: Promise.resolve({ outcome: "accepted" }),
+  });
+  window.dispatchEvent(prompt);
+});
+check("install card shows when the browser can install", !(await installing.$eval("#install-card", (e) => (e as HTMLElement).hidden)));
+await installing.click("#install-btn");
+check("install button opens the browser prompt", await installing.evaluate(() => (window as { prompted?: boolean }).prompted === true));
+await installing.evaluate(() => localStorage.removeItem("pqdViews"));
+await installing.close();
+
+// Social card image (the Vercel function, run here against the local site).
+const card = await socialCard(new Request(`${ROOT}api/og?dex=6&lang=es`));
+const bytes = new Uint8Array(await card.arrayBuffer());
+check("social card renders a PNG", card.status === 200 && bytes[0] === 0x89 && bytes[1] === 0x50, String(card.status));
+check("social card rejects unknown Pokémon", (await socialCard(new Request(`${ROOT}api/og?dex=0`))).status === 404);
 
 // Installable app.
 const pwa = await open("index.html");

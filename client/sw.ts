@@ -5,7 +5,7 @@ const RUNTIME = "pqd-runtime-v1";
 const IMAGES = "pqd-images-v1";
 const MAX_IMAGES = 800;
 const SPANISH = new URL("es/", sw.location.href).pathname;
-const PRECACHE = ["index.html", "offline.html", "es/offline.html", "data/meta.json", "data/moves.json", "manifest.webmanifest", "icons/icon-192.png"];
+const PRECACHE = ["index.html", "offline.html", "es/offline.html", "types.html", "es/types.html", "data/meta.json", "data/moves.json", "manifest.webmanifest", "icons/icon-192.png"];
 
 sw.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CORE).then((cache) => cache.addAll(PRECACHE)).then(() => sw.skipWaiting()));

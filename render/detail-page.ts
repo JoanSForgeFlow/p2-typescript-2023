@@ -10,7 +10,7 @@ import {
   statTotal, weightText,
 } from "../shared/sections";
 import { renderEvolution } from "./evolution";
-import { BRAND, asset, donateWidget, languageSwitch, pageHead, siteFooter, themeToggle } from "./components";
+import { BRAND, SITE_URL, asset, assetVersion, donateWidget, languageSwitch, pageHead, siteFooter, themeToggle } from "./components";
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 
@@ -42,7 +42,14 @@ export function renderPokemonDetail(details: PokemonDetails, page: PageData, met
 
   return `<!DOCTYPE html>
 <html lang="${getLang()}">
-  ${pageHead({ title: t('detail.metaTitle', { name: page.name, dex: dexNo(page.dex) }), description, path: detailFile(page.dex), image: variety.art, stylesheet: 'pokemon_styles.css' })}
+  ${pageHead({
+    title: t('detail.metaTitle', { name: page.name }),
+    description,
+    path: detailFile(page.dex),
+    image: `${SITE_URL}/api/og?dex=${page.dex}&lang=${getLang()}&v=${assetVersion('api/og.js')}`,
+    imageSize: [1200, 630],
+    stylesheet: 'pokemon_styles.css',
+  })}
   <body data-dex="${page.dex}">
     <header class="topbar">
       <div class="topbar-inner">
@@ -61,6 +68,7 @@ export function renderPokemonDetail(details: PokemonDetails, page: PageData, met
     </header>
     <main class="detail">
       <section id="hero" class="hero" style="${typeVars(variety.types)}">
+        <button type="button" id="share-btn" class="hero-share" title="${t('share.button')}" aria-label="${t('share.button')}">${icon('share')}</button>
         <div class="hero-inner">
           <div class="hero-head">
             <div class="hero-kicker"><span class="dex-no">#${dexNo(page.dex)}</span><span class="hero-gen">${t('detail.gen', { n: ROMAN[p.generation] || p.generation })}</span></div>
@@ -108,6 +116,7 @@ export function renderPokemonDetail(details: PokemonDetails, page: PageData, met
               <h3 class="sub-title">${t('offense.title')}</h3>
               <div id="offense">${renderOffense(meta, game.gen, typesFor(variety, game.gen))}</div>
             </div>
+            <a class="chart-link-inline" href="types.html">${icon('grid')}<span>${t('matchups.chartLink')}</span>${icon('arrowRight')}</a>
           </section>
           <section id="stats" class="card">
             <div class="card-head"><h2 class="card-title">${t('stats.title')}</h2></div>

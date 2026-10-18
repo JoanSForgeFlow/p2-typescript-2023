@@ -19,10 +19,11 @@ import { renderPokemonIndex } from "./render/index-page";
 import { renderPokemonDetail } from "./render/detail-page";
 import { SITE_URL, setAssetVersions } from "./render/components";
 import { renderOfflinePage } from "./render/offline-page";
+import { renderTypesPage } from "./render/types-page";
 
 const TOTAL = 1025;
 
-const ASSETS = ["css/base.css", "css/styles.css", "css/pokemon_styles.css", "css/types.css", "js/index.js", "js/detail.js"];
+const ASSETS = ["css/base.css", "css/styles.css", "css/pokemon_styles.css", "css/types.css", "js/index.js", "js/detail.js", "js/types.js", "api/og.js"];
 
 async function assetVersions(): Promise<Record<string, string>> {
   const versions: Record<string, string> = {};
@@ -123,6 +124,7 @@ async function generateSite() {
 
     await writeFile(`${dir}index.html`, renderPokemonIndex(pokemons, langPages, meta, ALL_TYPES));
     await writeFile(`${dir}offline.html`, renderOfflinePage());
+    await writeFile(`${dir}types.html`, renderTypesPage(meta));
     await mapWithConcurrency(Array.from(langPages.values()), 10, async (page) => {
       const details = await loadPokemonDetails(page.dex, lang);
       if (details) await writeFile(`${dir}${detailFile(page.dex)}`, renderPokemonDetail(details, page, meta, table, TOTAL));
@@ -130,7 +132,7 @@ async function generateSite() {
   }
 
   const today = new Date().toISOString().slice(0, 10);
-  const paths = ['', ...Array.from(pages.keys()).sort((a, b) => a - b).map(detailFile)];
+  const paths = ['', 'types.html', ...Array.from(pages.keys()).sort((a, b) => a - b).map(detailFile)];
   const urls = LANGS.flatMap(lang => paths.map(p => `${SITE_URL}/${langDir(lang)}${p}`));
   await writeFile("sitemap.xml", `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

@@ -3,7 +3,7 @@ import type { Meta, PageData, Variety } from "../shared/model";
 import { detailFile, dexNo, escapeHtml, searchKey, typeTags, typeVars } from "../shared/format";
 import { icon } from "../shared/icons";
 import { getLang, regionName, t } from "../shared/i18n";
-import { BRAND, asset, donateWidget, languageSwitch, pageHead, siteFooter, themeToggle } from "./components";
+import { BRAND, POKEBALL_LOGO, asset, donateWidget, languageSwitch, pageHead, siteFooter, themeToggle } from "./components";
 
 const GENERATION_REGIONS: [string, string, string][] = [
   ['generation-i', 'I', 'kanto'],
@@ -149,6 +149,16 @@ export function renderPokemonIndex(pokemons: Pokemon[], pages: Map<number, PageD
               <button type="button" id="filters-open" class="btn filters-open" aria-controls="filters">${icon('sliders')}<span>${t('filters.title')}</span><span class="badge" id="filters-badge" hidden></span></button>
               <button type="button" id="compare-mode-btn" class="btn compare-mode-btn" aria-pressed="false">${icon('swords')}<span>${t('compare.button')}</span></button>
             </div>
+          </div>
+          <div class="index-intro">
+            <p class="index-tagline">${t('index.tagline')}</p>
+            <a class="chart-link" href="types.html">${icon('grid')}<span>${t('index.typeChart')}</span>${icon('arrowRight')}</a>
+          </div>
+          <div class="install-card" id="install-card" hidden>
+            ${POKEBALL_LOGO}
+            <p class="install-text"><strong>${t('install.title')}</strong><span id="install-hint">${t('install.text')}</span></p>
+            <button type="button" class="btn btn-primary" id="install-btn">${t('install.button')}</button>
+            <button type="button" class="icon-btn install-close" id="install-close" aria-label="${t('common.close')}">${icon('close')}</button>
           </div>
           <div class="active-filters" id="active-filters" hidden></div>
           <p class="compare-hint" id="compare-hint" hidden>${t('compare.hint')}</p>

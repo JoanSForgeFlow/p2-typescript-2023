@@ -44,6 +44,36 @@ html.dark-mode .hero {
     linear-gradient(var(--split-dark));
 }
 
+/* Top right sits on the second colour in the two-column layout. */
+.hero-share {
+  --hink: var(--tink2);
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--hink) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hink) 22%, transparent);
+  color: var(--hink);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.hero-share .icon {
+  width: 19px;
+  height: 19px;
+}
+
+.hero-share:hover {
+  background: color-mix(in srgb, var(--hink) 24%, transparent);
+}
+
 .hero::before {
   content: "";
   position: absolute;
@@ -839,11 +869,19 @@ html.dark-mode .hero {
     --split-dark: 180deg, color-mix(in oklab, var(--tc) 84%, black) 0 30%, color-mix(in oklab, var(--tc2) 84%, black) 46% 100%;
   }
 
-  /* Stacked layout: the buttons sit on the second colour. */
+  /* Stacked layout: the buttons sit on the second colour, the top on the first. */
   .hero-actions {
     --hink: var(--tink2);
     --hbg: var(--tc2);
     color: var(--hink);
+  }
+
+  .hero-share {
+    --hink: var(--tink);
+    top: 14px;
+    right: 14px;
+    width: 40px;
+    height: 40px;
   }
 
   .hero::before {
@@ -1169,6 +1207,26 @@ html {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.chart-link-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.chart-link-inline .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.chart-link-inline:hover span {
+  text-decoration: underline;
 }
 
 .moves-tabs {
@@ -1592,4 +1650,217 @@ details.more[open] > summary::after {
 .empty-hint .link-btn {
   padding: 0;
   font-size: 13px;
+}
+
+/* Type chart page */
+.chart-main {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 28px 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.chart-hero h1 {
+  margin: 0;
+  font-size: clamp(30px, 4vw, 42px);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+
+.chart-intro {
+  max-width: 640px;
+  margin: 8px 0 0;
+  font-size: 15px;
+  color: var(--text-2);
+}
+
+.calc-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.calc-head select {
+  height: 38px;
+  max-width: 300px;
+  font-weight: 700;
+}
+
+.type-picker {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.type-pick {
+  height: 34px;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s, box-shadow 0.15s;
+}
+
+.type-picker.has-pick .type-pick:not([aria-pressed="true"]) {
+  opacity: 0.45;
+}
+
+.type-pick[aria-pressed="true"] {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--tc);
+}
+
+.type-pick:disabled {
+  opacity: 0.2 !important;
+  cursor: not-allowed;
+}
+
+.calc-result {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.calc-empty {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.type-chart {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 2px;
+}
+
+.type-chart th,
+.type-chart td {
+  height: 32px;
+  padding: 0;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.type-chart td {
+  background: var(--surface-2);
+}
+
+.type-chart .tc-x2 {
+  background: #16a34a;
+  color: #fff;
+}
+
+.type-chart .tc-x05 {
+  background: #e11d48;
+  color: #fff;
+}
+
+.type-chart .tc-x0 {
+  background: #334155;
+  color: #fff;
+}
+
+.type-chart td.sel:not([class*="tc-x"]) {
+  background: var(--accent-soft);
+}
+
+.type-chart th.sel .tc-icon {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent);
+}
+
+.tc-corner {
+  width: 32px;
+}
+
+.tc-icon {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  gap: 0;
+  justify-content: center;
+  vertical-align: middle;
+  font-size: 0;
+}
+
+.tc-icon::before {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 640px) {
+  .chart-main {
+    padding: 18px 10px 0;
+    gap: 12px;
+  }
+
+  .chart-hero {
+    padding: 0 6px;
+  }
+
+  .chart-intro {
+    font-size: 14px;
+  }
+
+  .type-picker {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .type-pick {
+    height: 32px;
+    font-size: 10.5px;
+  }
+
+  .chart-card {
+    padding: 16px 8px;
+  }
+
+  .chart-card .card-head {
+    padding: 0 8px;
+  }
+
+  .type-chart {
+    border-spacing: 1px;
+  }
+
+  .type-chart th,
+  .type-chart td {
+    height: 20px;
+    border-radius: 3px;
+    font-size: 9px;
+  }
+
+  .tc-corner {
+    width: 16px;
+  }
+
+  .tc-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .tc-icon::before {
+    width: 10px;
+    height: 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  .type-pick {
+    gap: 3px;
+    padding: 0 6px 0 4px;
+    font-size: 10px;
+    letter-spacing: 0.02em;
+  }
+
+  .type-pick::before {
+    width: 14px;
+    height: 14px;
+  }
 }

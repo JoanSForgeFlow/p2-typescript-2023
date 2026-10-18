@@ -16,6 +16,8 @@ export function setAssetVersions(versions: Record<string, string>): void {
 
 export const asset = (path: string): string => `${rootPath()}${assetVersions[path] ? `${path}?v=${assetVersions[path]}` : path}`;
 
+export const assetVersion = (path: string): string => assetVersions[path] || '';
+
 export const POKEBALL_LOGO = `<svg class="brand-logo" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="#fff" stroke="#111827" stroke-width="2.5"/><path d="M2 16a14 14 0 0 1 28 0z" fill="#e3350d" stroke="#111827" stroke-width="2.5"/><circle cx="16" cy="16" r="4.5" fill="#fff" stroke="#111827" stroke-width="2.5"/></svg>`;
 
 export const BRAND = `${POKEBALL_LOGO}<span class="brand-name">PokeQuick<span>Dex</span></span>`;
@@ -52,8 +54,14 @@ export const donateWidget = (): string => `
         <button type="button" id="donate-fab" class="donate-fab" title="${t('donate.fab')}" aria-label="${t('donate.fab')}" aria-expanded="false" aria-controls="donate-card">${HEART}</button>
       </div>`;
 
+// The install link only shows up where the browser can install the app.
 export const siteFooter = (): string => `
       <footer class="site-footer">
+        <nav class="footer-nav">
+          <a href="index.html">Pokédex</a>
+          <a href="types.html">${t('footer.typeChart')}</a>
+          <button type="button" class="link-btn footer-install" id="install-link" hidden>${icon('download')}${t('install.link')}</button>
+        </nav>
         <span>${t('footer.data', { link: '<a href="https://pokeapi.co" target="_blank" rel="noopener">PokéAPI</a>' })}</span>
         <span>${t('footer.trademark')}</span>
       </footer>`;
@@ -63,6 +71,7 @@ export interface HeadOptions {
   description: string;
   path: string;
   image: string;
+  imageSize?: [width: number, height: number];
   stylesheet: string;
   extra?: string;
   alternates?: boolean;
@@ -103,8 +112,11 @@ export function pageHead(o: HeadOptions): string {
       <meta property="og:title" content="${title}">
       <meta property="og:description" content="${description}">
       <meta property="og:url" content="${url}">
-      <meta property="og:image" content="${o.image}">
-      <meta name="twitter:card" content="summary">
+      <meta property="og:image" content="${o.image}">${o.imageSize ? `
+      <meta property="og:image:width" content="${o.imageSize[0]}">
+      <meta property="og:image:height" content="${o.imageSize[1]}">
+      <meta property="og:image:alt" content="${title}">` : ''}
+      <meta name="twitter:card" content="${o.imageSize ? 'summary_large_image' : 'summary'}">
       <link rel="icon" href="${FAVICON}">
       <link rel="apple-touch-icon" href="${rootPath()}icons/apple-touch-icon.png">
       <link rel="manifest" href="${rootPath()}manifest.webmanifest">

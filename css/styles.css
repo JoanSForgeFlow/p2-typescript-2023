@@ -138,6 +138,100 @@
   color: var(--surface);
 }
 
+.index-intro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin: -4px 0 16px;
+}
+
+.index-tagline {
+  flex: 1 1 320px;
+  max-width: 640px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-2);
+}
+
+.chart-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 0.15s;
+}
+
+.chart-link .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.chart-link .icon:first-child {
+  color: var(--accent);
+}
+
+.chart-link:hover {
+  border-color: var(--border-strong);
+}
+
+.install-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 10px 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.install-card .brand-logo {
+  width: 34px;
+  height: 34px;
+}
+
+.install-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.install-text strong {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.install-card .btn {
+  height: 38px;
+  padding: 0 14px;
+}
+
+.install-close {
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: none;
+}
+
 .active-filters {
   display: flex;
   flex-wrap: wrap;
@@ -991,6 +1085,15 @@ body.compare-mode .pokemon-card.selected-compare::after {
   }
 
   .results-count {
+    font-size: 13px;
+  }
+
+  .index-intro {
+    margin-top: -2px;
+  }
+
+  .index-tagline {
+    flex-basis: 100%;
     font-size: 13px;
   }
 

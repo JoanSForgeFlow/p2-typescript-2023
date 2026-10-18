@@ -4,6 +4,7 @@
 #   bash scripts/deploy.sh [path-to-QuickDex]
 # Then review and push from QuickDex:
 #   git -C ../QuickDex add -A && git -C ../QuickDex commit -m "[DEPLOY] ..." && git -C ../QuickDex push
+# and, once the new version is live, tell search engines: bun run indexnow
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -17,13 +18,16 @@ fi
 bun run build:client
 bun main.ts
 
-rsync -a index.html offline.html sitemap.xml robots.txt manifest.webmanifest sw.js vercel.json "$TARGET/"
+rsync -a index.html offline.html types.html sitemap.xml robots.txt manifest.webmanifest sw.js vercel.json "$TARGET/"
+rsync -a deploy/package.json $(ls | grep -E '^[0-9a-f]{32}\.txt$') "$TARGET/"
 rsync -a [0-9][0-9][0-9][0-9]_details.html "$TARGET/"
 rsync -a --delete css/ "$TARGET/css/"
 rsync -a --delete js/ "$TARGET/js/"
 rsync -a --delete icons/ "$TARGET/icons/"
 rsync -a --delete data/ "$TARGET/data/"
 rsync -a --delete es/ "$TARGET/es/"
+rsync -a --delete api/ "$TARGET/api/"
+rsync -a --delete fonts/ "$TARGET/fonts/"
 
 echo
 echo "Copied to $TARGET:"

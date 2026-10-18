@@ -8,7 +8,7 @@ import {
   compareText, decimal, getLang, integer, joinNames, learnMethodLabel, machineLabel, percent, plural, statLabel, t,
   typeLabel, typeName, type Lang,
 } from './i18n';
-import { defensiveMatchups, eraLabel, offensiveCoverage, typesFor } from './type-chart';
+import { damageMultiplier, defensiveMatchups, eraLabel, offensiveCoverage, typesFor, typesInGen } from './type-chart';
 
 export const ABILITY_MATCHUPS: Record<Lang, Record<string, string>> = {
   en: {
@@ -308,4 +308,15 @@ export function catchRateHtml(profile: Profile, game: Game): string {
 export function eggCyclesText(profile: Profile): string {
   if (!profile.hatchCounter) return '—';
   return `${t('profile.cycles', { n: profile.hatchCounter })} <span class="unit-alt">${t('profile.steps', { n: integer(Math.round((profile.hatchCounter * 256) / 100) * 100) })}</span>`;
+}
+
+// The full chart for a generation: rows attack, columns defend. Headers are
+// type icons with the name for screen readers and search engines.
+export function renderTypeChart(meta: Meta, gen: number): string {
+  const types = typesInGen(meta, gen);
+  const head = (type: string) =>
+    `<span class="tag ${type} tc-icon" title="${typeName(type)}"><span class="sr-only">${typeName(type)}</span></span>`;
+  const cell = (m: number) => (m === 1 ? '<td></td>' : `<td class="tc-x${m === 0.5 ? '05' : m}">${m === 0.5 ? '½' : m}</td>`);
+  return `<thead><tr><th class="tc-corner" scope="col"><span class="sr-only">${t('chart.legend')}</span></th>${types.map(d => `<th scope="col">${head(d)}</th>`).join('')}</tr></thead>`
+    + `<tbody>${types.map(a => `<tr><th scope="row">${head(a)}</th>${types.map(d => cell(damageMultiplier(meta, gen, a, [d]))).join('')}</tr>`).join('')}</tbody>`;
 }

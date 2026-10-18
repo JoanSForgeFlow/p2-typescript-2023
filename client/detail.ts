@@ -6,7 +6,7 @@ import {
   catchRateHtml, effectiveGame, evYield, heightText, renderAbilities, renderAbilityNotes, renderDefense, renderEntries,
   renderEraNote, renderLocations, renderMoves, renderOffense, renderStatsRows, statTotal, weightText,
 } from "../shared/sections";
-import { $, initCommon, loadMeta, loadMoves, loadPage, storeGame, storedGame } from "./common";
+import { $, initCommon, loadMeta, loadMoves, loadPage, storeGame, storedGame, toast } from "./common";
 
 const all = <T extends Element = HTMLElement>(selector: string, root: ParentNode = document): T[] =>
   Array.from(root.querySelectorAll<T>(selector));
@@ -44,6 +44,25 @@ function initFilteredNav(dex: number): void {
     if (e.altKey || e.ctrlKey || e.metaKey || /^(INPUT|SELECT|TEXTAREA)$/.test(tag)) return;
     if (e.key === "ArrowLeft" && prevBtn.style.visibility !== "hidden") location.href = prevBtn.href;
     if (e.key === "ArrowRight" && nextBtn.style.visibility !== "hidden") location.href = nextBtn.href;
+  });
+}
+
+// The system share sheet where there is one (phones), else copy the link.
+function initShare(): void {
+  $("share-btn").addEventListener("click", async () => {
+    const name = $("pokemon-title-name").textContent || "";
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: document.title, text: t("share.text", { name }), url: location.href });
+      } catch (e) { /* cancelled */ }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(location.href);
+      toast(t("share.copied"));
+    } catch (e) {
+      toast(location.href);
+    }
   });
 }
 
@@ -230,6 +249,7 @@ async function init(): Promise<void> {
   const dex = Number(document.body.dataset.dex);
   initFilteredNav(dex);
   initSectionNav();
+  initShare();
 
   const cry = $<HTMLAudioElement>("pokemon-cry");
   $("cry-button").addEventListener("click", () => {
