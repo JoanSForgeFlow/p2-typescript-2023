@@ -233,9 +233,11 @@ html.dark-mode .hero {
   filter: drop-shadow(0 22px 26px rgba(0, 0, 0, 0.25));
 }
 
+/* Animated and game sprites are small images: enlarge them to fill most of
+   the artwork's space, keeping their pixels sharp. */
 #pokemon-artwork[src$=".gif"],
 #pokemon-artwork[src*="/sprites/pokemon/"]:not([src*="/other/"]) {
-  padding: 16%;
+  padding: 4%;
   image-rendering: pixelated;
 }
 
