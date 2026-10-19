@@ -300,7 +300,7 @@ async function init(): Promise<void> {
   }));
   // Battle-only forms live inside the chain; route through the URL hash so
   // switching away and back always fires and the form is linkable.
-  all<HTMLElement>(".evo-battle-step").forEach(step => step.addEventListener("click", () => {
+  all<HTMLElement>(".evo-battle-step[data-form]").forEach(step => step.addEventListener("click", () => {
     location.hash = step.dataset.form!;
   }));
   window.addEventListener("hashchange", () => applyHash(state));
