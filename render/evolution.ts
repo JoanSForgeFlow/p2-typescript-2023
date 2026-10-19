@@ -25,13 +25,24 @@ export function renderEvolution(pokemon: PokemonDetails, page: PageData): Evolut
         </a>`;
     };
 
-    const battleSuffix = (formName: string): string =>
-      formName.startsWith(pokemon.codename + '-') ? formName.slice(pokemon.codename.length + 1) : formName.split('-').slice(1).join('-');
-    const evoBattleStep = (b: any): string => `
-        <button type="button" class="evo-battle-step" data-form="${battleSuffix(b.formName)}">
+    const battleSuffix = (formName: string, codename: string): string =>
+      formName.startsWith(codename + '-') ? formName.slice(codename.length + 1) : formName.split('-').slice(1).join('-');
+    // A battle form of the current species switches in place (via the hash);
+    // one of another species (Mega Venusaur on Ivysaur's page) links to that
+    // species' page opened in the form.
+    const evoBattleStep = (b: any, owner: any): string => {
+      const suffix = battleSuffix(b.formName, owner.codename);
+      const body = `
           <img src="${b.imageUrl}" alt="${b.name}" loading="lazy" crossorigin="anonymous" />
-          <span>${b.name}</span>
-        </button>`;
+          <span>${b.name}</span>`;
+      return owner.id === pokemon.id
+        ? `
+        <button type="button" class="evo-battle-step" data-form="${suffix}">${body}
+        </button>`
+        : `
+        <a href="${String(owner.id).padStart(4, '0')}_details.html#${suffix}" class="evo-battle-step">${body}
+        </a>`;
+    };
 
     // A node's outgoing links: its evolutions ("→") and battle-only
     // transformations ("↔"). With more than one they stack as branches, so a
@@ -61,7 +72,7 @@ export function renderEvolution(pokemon: PokemonDetails, page: PageData): Evolut
       }
       // A single battle form (terminal node) → inline "↔" + trigger + form.
       if (evos.length === 0 && battles.length === 1) {
-        html += battleArrow(battles[0]) + evoBattleStep(battles[0]);
+        html += battleArrow(battles[0]) + evoBattleStep(battles[0], evo);
         return html;
       }
       // Multiple outgoing links → stack them: evolutions with "→", battle forms
@@ -71,7 +82,7 @@ export function renderEvolution(pokemon: PokemonDetails, page: PageData): Evolut
         html += evos.map((nextEvo: any) => `
             <div class="evo-branch-row">${renderEvolutionStep(nextEvo, false)}</div>`).join('');
         html += battles.map((b: any) => `
-            <div class="evo-branch-row">${battleArrow(b)}${evoBattleStep(b)}</div>`).join('');
+            <div class="evo-branch-row">${battleArrow(b)}${evoBattleStep(b, evo)}</div>`).join('');
         html += `</div>`;
       }
       return html;
@@ -204,7 +215,7 @@ export function renderEvolution(pokemon: PokemonDetails, page: PageData): Evolut
       const hash = displayVariant.formName === node.defaultFormName
         ? ''
         : (displayVariant.formName.startsWith(node.codename + '-') ? displayVariant.formName.slice(node.codename.length + 1) : displayVariant.formName.split('-').slice(1).join('-'));
-      return { id: node.speciesId, name: displayVariant.name, imageUrl: displayVariant.imageUrl, hasForms, hash, triggerDetails, evolvesTo, battleForms };
+      return { id: node.speciesId, codename: node.codename, name: displayVariant.name, imageUrl: displayVariant.imageUrl, hasForms, hash, triggerDetails, evolvesTo, battleForms };
     };
     const renderRegionChain = (region: string, chainRegions: Set<string>): string => {
       if (!pokemon.evolutionChain) return `<p class="no-evolution">${t('evo.none')}</p>`;
@@ -248,7 +259,7 @@ export function renderEvolution(pokemon: PokemonDetails, page: PageData): Evolut
       const hash = displayVariant.formName === node.defaultFormName
         ? ''
         : (displayVariant.formName.startsWith(node.codename + '-') ? displayVariant.formName.slice(node.codename.length + 1) : displayVariant.formName.split('-').slice(1).join('-'));
-      return { id: node.speciesId, name: displayVariant.name, imageUrl: displayVariant.imageUrl, hasForms, hash, triggerDetails: '', evolvesTo, battleForms };
+      return { id: node.speciesId, codename: node.codename, name: displayVariant.name, imageUrl: displayVariant.imageUrl, hasForms, hash, triggerDetails: '', evolvesTo, battleForms };
     };
 
     // One chain per region the current species actually has a form for, read
@@ -376,6 +387,7 @@ export function renderEvolution(pokemon: PokemonDetails, page: PageData): Evolut
       const pageLabel = getLang() === 'en' ? '' : page.varieties.find(v => v.name === baseFormName)?.label;
       const root = {
         id: pokemon.id,
+        codename: pokemon.codename,
         name: pageLabel || `${pokemon.name} (${evoTitleCase(evoSuffixOf(baseFormName))})`,
         imageUrl: evoArtwork(varietyIdByName[baseFormName]),
         hasForms: false,

@@ -129,6 +129,10 @@ detail = await open("0006_details.html#mega-x");
 await wait(300);
 check("battle-only form", (await detail.$eval("#detail-training", (e) => (e as HTMLElement).hidden))
   && (await detail.$eval('.evo-battle-step[data-form="mega-x"]', (e) => e.classList.contains("current"))));
+await detail.close();
+detail = await open("0002_details.html");
+check("another species' battle form links to its page",
+  (await detail.$$eval(".evo-battle-step", (es) => es.map((e) => e.getAttribute("href")))).includes("0003_details.html#mega"));
 check("ability note (Levitate)", (await (await open("0479_details.html")).$eval("#ability-notes", (e) => e.textContent || "")).includes("Levitate"));
 
 // Spanish pages live under es/ and are chosen with the language button.
