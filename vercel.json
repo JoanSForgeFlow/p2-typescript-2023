@@ -13,5 +13,9 @@
       "permanent": true
     },
     { "source": "/es", "destination": "/es/", "permanent": true }
+  ],
+  "rewrites": [
+    { "source": "/app", "destination": "/index.html" },
+    { "source": "/es/app", "destination": "/es/index.html" }
   ]
 }

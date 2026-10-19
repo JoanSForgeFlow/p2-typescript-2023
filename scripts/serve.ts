@@ -1,4 +1,5 @@
 import { createServer, type Server } from "http";
+import { existsSync, readFileSync } from "fs";
 import { readFile } from "fs/promises";
 import { extname, join, normalize, resolve } from "path";
 
@@ -16,8 +17,12 @@ const TYPES: Record<string, string> = {
 
 export function serve(root: string, port: number): Promise<Server> {
   const base = resolve(root);
+  // Same rewrites as on Vercel, like /app (where the installed app opens).
+  const config = join(base, "vercel.json");
+  const rewrites: { source: string; destination: string }[] = existsSync(config) ? JSON.parse(readFileSync(config, "utf8")).rewrites || [] : [];
   const server = createServer(async (req, res) => {
-    const path = decodeURIComponent((req.url || "/").split("?")[0]);
+    const requested = decodeURIComponent((req.url || "/").split("?")[0]);
+    const path = rewrites.find((r) => r.source === requested)?.destination || requested;
     const file = normalize(join(base, path.endsWith("/") ? `${path}index.html` : path));
     if (!file.startsWith(base)) {
       res.writeHead(403).end();

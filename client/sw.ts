@@ -19,8 +19,12 @@ sw.addEventListener("activate", (event) => {
   })());
 });
 
-// "/" and "/index.html" are the same page (also under es/).
-const pageKey = (url: URL): string => `${url.origin}${url.pathname}${url.pathname.endsWith("/") ? "index.html" : ""}`;
+// "/", "/index.html" and "/app" (where the installed app opens) are the same
+// page (also under es/).
+const pageKey = (url: URL): string => {
+  const path = url.pathname.replace(/\/app$/, "/");
+  return `${url.origin}${path}${path.endsWith("/") ? "index.html" : ""}`;
+};
 
 async function networkFirst(request: Request, fallback?: string, key: Request | string = request): Promise<Response> {
   const cache = await caches.open(RUNTIME);
