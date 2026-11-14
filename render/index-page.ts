@@ -3,7 +3,7 @@ import type { Meta, PageData, Variety } from "../shared/model";
 import { detailFile, dexNo, escapeHtml, searchKey, typeTags, typeVars } from "../shared/format";
 import { icon } from "../shared/icons";
 import { getLang, regionName, t } from "../shared/i18n";
-import { BRAND, POKEBALL_LOGO, asset, donateWidget, languageSwitch, pageHead, siteFooter, themeToggle } from "./components";
+import { BRAND, POKEBALL_LOGO, asset, donateWidget, languageSwitch, pageHead, siteFooter, themeToggle, websiteJsonLd } from "./components";
 
 const GENERATION_REGIONS: [string, string, string][] = [
   ['generation-i', 'I', 'kanto'],
@@ -83,6 +83,7 @@ export function renderPokemonIndex(pokemons: Pokemon[], pages: Map<number, PageD
       image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png',
       stylesheet: 'styles.css',
       extra: '\n      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5418523060607609" crossorigin="anonymous"></script>',
+      jsonLd: [websiteJsonLd()],
     })}
     <body>
       <header class="topbar">

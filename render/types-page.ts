@@ -3,7 +3,7 @@ import { escapeHtml } from "../shared/format";
 import { icon } from "../shared/icons";
 import { getLang, t, typeLabel } from "../shared/i18n";
 import { renderTypeChart } from "../shared/sections";
-import { BRAND, asset, donateWidget, languageSwitch, pageHead, siteFooter, themeToggle } from "./components";
+import { BRAND, asset, breadcrumbJsonLd, donateWidget, languageSwitch, pageHead, siteFooter, themeToggle } from "./components";
 
 // Type chart page: a calculator for one or two types (what the Pokémon you
 // are facing is weak to) and the full chart of the chosen game.
@@ -21,6 +21,7 @@ export function renderTypesPage(meta: Meta): string {
     path: 'types.html',
     image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png',
     stylesheet: 'pokemon_styles.css',
+    jsonLd: [breadcrumbJsonLd(t('chart.title'), 'types.html')],
   })}
   <body>
     <header class="topbar">

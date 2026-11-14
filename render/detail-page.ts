@@ -10,7 +10,7 @@ import {
   statTotal, weightText,
 } from "../shared/sections";
 import { renderEvolution } from "./evolution";
-import { BRAND, SITE_URL, asset, assetVersion, donateWidget, languageSwitch, pageHead, siteFooter, themeToggle } from "./components";
+import { BRAND, SITE_URL, asset, assetVersion, breadcrumbJsonLd, donateWidget, languageSwitch, pageHead, siteFooter, themeToggle } from "./components";
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 
@@ -49,6 +49,7 @@ export function renderPokemonDetail(details: PokemonDetails, page: PageData, met
     image: `${SITE_URL}/api/og?dex=${page.dex}&lang=${getLang()}&v=${assetVersion('api/og.js')}`,
     imageSize: [1200, 630],
     stylesheet: 'pokemon_styles.css',
+    jsonLd: [breadcrumbJsonLd(page.name, detailFile(page.dex))],
   })}
   <body data-dex="${page.dex}">
     <header class="topbar">

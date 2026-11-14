@@ -75,6 +75,7 @@ export interface HeadOptions {
   stylesheet: string;
   extra?: string;
   alternates?: boolean;
+  jsonLd?: object[];
 }
 
 const FAVICON = `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='47' fill='%23f0f0f0' stroke='%23333' stroke-width='6'/><path d='M3 50 A47 47 0 0 1 97 50' fill='%23ee1515'/><rect x='0' y='46' width='100' height='8' fill='%23333'/><circle cx='50' cy='50' r='12' fill='%23fff' stroke='%23333' stroke-width='6'/><circle cx='50' cy='50' r='5' fill='%23333'/></svg>`;
@@ -90,6 +91,29 @@ const LANGUAGE_REDIRECT = `
           }
         } catch (e) {}`;
 
+export const websiteJsonLd = (): object => ({
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'PokeQuickDex',
+  alternateName: 'QuickDex',
+  url: `${SITE_URL}/`,
+  inLanguage: getLang(),
+});
+
+export function breadcrumbJsonLd(name: string, path: string): object {
+  const items = [{ name: 'PokeQuickDex', path: '' }, { name, path }];
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: item.name,
+      item: `${SITE_URL}/${langDir()}${item.path}`,
+    })),
+  };
+}
+
 export function pageHead(o: HeadOptions): string {
   const lang = getLang();
   const url = `${SITE_URL}/${langDir()}${o.path}`;
@@ -99,6 +123,8 @@ export function pageHead(o: HeadOptions): string {
       <link rel="alternate" hreflang="en" href="${SITE_URL}/${o.path}">
       <link rel="alternate" hreflang="es" href="${SITE_URL}/es/${o.path}">
       <link rel="alternate" hreflang="x-default" href="${SITE_URL}/${o.path}">`;
+  const structuredData = (o.jsonLd || []).map(data => `
+      <script type="application/ld+json">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>`).join('');
   return `
     <head>
       <meta charset="UTF-8">
@@ -116,7 +142,7 @@ export function pageHead(o: HeadOptions): string {
       <meta property="og:image:width" content="${o.imageSize[0]}">
       <meta property="og:image:height" content="${o.imageSize[1]}">
       <meta property="og:image:alt" content="${title}">` : ''}
-      <meta name="twitter:card" content="${o.imageSize ? 'summary_large_image' : 'summary'}">
+      <meta name="twitter:card" content="${o.imageSize ? 'summary_large_image' : 'summary'}">${structuredData}
       <link rel="icon" href="${FAVICON}">
       <link rel="apple-touch-icon" href="${rootPath()}icons/apple-touch-icon.png">
       <link rel="manifest" href="${rootPath()}manifest.webmanifest">
